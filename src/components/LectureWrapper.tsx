@@ -9,22 +9,30 @@ interface LectureWrapperProps {
 }
 
 const LectureWrapper = ({ id, title, children }: LectureWrapperProps) => {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
-
   const currentIndex = lectures.findIndex((l) => l.id === id);
+  const current = currentIndex >= 0 ? lectures[currentIndex] : null;
   const prev = currentIndex > 0 ? lectures[currentIndex - 1] : null;
   const next =
     currentIndex < lectures.length - 1 ? lectures[currentIndex + 1] : null;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = `${id}. ${title} — BTU Frontend`;
+  }, [id, title]);
 
   return (
     <article className="max-w-4xl mx-auto px-6 py-8">
       <div className="mb-8">
         <span className="text-sm font-medium text-indigo-600 uppercase tracking-wide">
-          Lecture {id}
+          Lecture {id} of {lectures.length}
+          {current && ` · ${current.section}`}
         </span>
         <h1 className="text-3xl font-bold text-gray-900 mt-1">{title}</h1>
+        {current && (
+          <p className="text-gray-600 mt-2 leading-relaxed">
+            {current.description}
+          </p>
+        )}
       </div>
 
       <div className="lecture-content">{children}</div>

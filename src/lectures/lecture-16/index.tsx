@@ -469,6 +469,78 @@ console.log("Masked card:", masked);`}
           it has. The key is separating your concerns: rules are separate from
           validation logic, which is separate from display logic.
         </InfoBox>
+
+        <InfoBox type="warning">
+          <strong>
+            Client-side validation is for user experience only -- it is not
+            security.
+          </strong>{" "}
+          Everything on this page runs in the user's browser, where the user is
+          in charge. Anyone can open DevTools, delete your <code>required</code>{" "}
+          attributes, edit your regex, or skip the page entirely and send a
+          request straight to your API. The server must validate every single
+          field again, on arrival, every time. Validation in the browser exists
+          to give an honest user fast, friendly feedback -- never to keep a
+          dishonest one out.
+        </InfoBox>
+
+        <h3>You Do Not Have to Write All of This Yourself</h3>
+        <p>
+          The browser already has a validation engine built in -- the{" "}
+          <strong>Constraint Validation API</strong>. You met its HTML half in
+          week 3 (<code>required</code>, <code>type="email"</code>); here is the
+          JavaScript half, which lets you keep the browser's error handling and
+          just add your own rules on top.
+        </p>
+
+        <AnnotatedCode
+          title="Constraint Validation API: less code, better accessibility"
+          segments={[
+            {
+              code: '<input id="username" name="username"\n       required\n       minlength="3" maxlength="20"\n       pattern="[a-zA-Z0-9_]+" />\n\n',
+              annotation:
+                "The rules live on the element itself. The browser now enforces them, blocks submission, focuses the first bad field, and shows a localised message -- in the user's own language -- with no JavaScript at all.",
+              label: "HTML does the work",
+            },
+            {
+              code: "input.checkValidity()",
+              annotation:
+                "Returns true/false without showing anything. Use it to decide whether to enable a button. reportValidity() does the same but also displays the browser's message bubble.",
+              label: "checkValidity()",
+            },
+            { code: "\n" },
+            {
+              code: "input.validity.valueMissing   // empty but required\ninput.validity.tooShort       // shorter than minlength\ninput.validity.typeMismatch   // not a valid email/url\ninput.validity.patternMismatch\n\n",
+              annotation:
+                "The validity object tells you exactly WHICH rule failed, so you can write a specific message instead of a generic 'Invalid format'.",
+              label: "Which rule failed",
+            },
+            {
+              code: 'input.setCustomValidity("That username is already taken");',
+              annotation:
+                "For rules the browser cannot know about -- uniqueness, passwords matching, a server check. Pass a message to mark the field invalid; pass an empty string to clear it again. The field now participates in checkValidity() like any built-in rule.",
+              label: "Your own rules",
+            },
+            { code: "\n\n" },
+            {
+              code: "/* And in CSS -- no JS needed to style the states: */\ninput:user-invalid { border-color: #e53e3e; }\ninput:user-valid   { border-color: #38a169; }",
+              annotation:
+                ":user-invalid only matches AFTER the user has interacted with the field -- unlike :invalid, which paints every empty required field red the moment the page loads. That difference is the reason students' forms look 'angry' before anyone has typed anything.",
+              label: ":user-invalid",
+            },
+          ]}
+        />
+
+        <InfoBox type="tip">
+          Reach for regex only for rules the browser has no concept of. For
+          "required", "must be an email", "at least 8 characters" -- the
+          built-ins are shorter, already translated into every language, and
+          announced correctly by screen readers. If you want to replace the
+          browser's bubbles with your own styled messages, add{" "}
+          <code>novalidate</code> to the <code>&lt;form&gt;</code>: the rules
+          still apply and <code>checkValidity()</code> still works, the browser
+          just stops drawing its own UI.
+        </InfoBox>
       </section>
 
       {/* ── Section 8: Course Summary ── */}
@@ -484,26 +556,42 @@ console.log("Masked card:", masked);`}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
-                weeks: "1-4",
+                weeks: "1-3",
                 title: "HTML Foundations",
                 items:
-                  "Document structure, semantic elements, text, links, images, lists, tables, forms, accessibility",
+                  "How the web works, HTML5 structure, tags and attributes, semantic elements, media, display types, the box model, forms",
                 color: "bg-red-50 border-red-200",
                 accent: "text-red-600",
               },
               {
-                weeks: "5-8",
-                title: "CSS & Styling",
+                weeks: "4-6",
+                title: "CSS & Layout",
                 items:
-                  "Selectors, specificity, box model, Flexbox, CSS Grid, responsive design, transitions, animations",
+                  "Selectors, specificity, Flexbox, backgrounds, CSS Grid, pseudo-classes, animations, responsive design, positioning",
                 color: "bg-blue-50 border-blue-200",
                 accent: "text-blue-600",
+              },
+              {
+                weeks: "7",
+                title: "Generative AI",
+                items:
+                  "Prompt engineering, generating/debugging/refactoring code with ChatGPT, Claude and Gemini, validating AI output, ethical and academic-integrity rules",
+                color: "bg-slate-50 border-slate-200",
+                accent: "text-slate-600",
+              },
+              {
+                weeks: "8",
+                title: "Midterm",
+                items:
+                  "Review of weeks 1-7 and the midterm exam in the computer lab",
+                color: "bg-stone-50 border-stone-200",
+                accent: "text-stone-600",
               },
               {
                 weeks: "9-10",
                 title: "JavaScript Basics",
                 items:
-                  "Variables, data types, operators, conditionals, loops, arrays, array methods, objects, functions",
+                  "Variables, scope, data types, coercion, objects, copying, arrays, array methods, operators, loops",
                 color: "bg-yellow-50 border-yellow-200",
                 accent: "text-yellow-600",
               },
@@ -527,7 +615,7 @@ console.log("Masked card:", masked);`}
                 weeks: "13",
                 title: "Async JavaScript",
                 items:
-                  "Callbacks, promises, .then/.catch/.finally, Promise.all, Promise.race, setTimeout/setInterval",
+                  "Callbacks, promises, .then/.catch/.finally, Promise.all, Promise.race, setTimeout, the event loop and microtasks",
                 color: "bg-indigo-50 border-indigo-200",
                 accent: "text-indigo-600",
               },
@@ -560,7 +648,7 @@ console.log("Masked card:", masked);`}
                 <div
                   className={`text-xs font-bold uppercase tracking-wide ${block.accent}`}
                 >
-                  Week{block.weeks.length > 1 ? "s" : ""} {block.weeks}
+                  Week{block.weeks.includes("-") ? "s" : ""} {block.weeks}
                 </div>
                 <div className="font-bold text-gray-800 mt-1">
                   {block.title}
@@ -705,9 +793,19 @@ console.log("Masked card:", masked);`}
         <ExerciseBlock number={2}>
           <p>
             <strong>Live Search:</strong> Create an input field and an array of
-            10+ items. As the user types, filter the list in real time using{" "}
-            <code>new RegExp(input, "i")</code>. The search should be
-            case-insensitive.
+            10+ items. As the user types, filter the list in real time. The
+            search should be case-insensitive -- use{" "}
+            <code>item.toLowerCase().includes(query.toLowerCase())</code>.
+          </p>
+          <p>
+            <em>Then try to break it:</em> swap in{" "}
+            <code>new RegExp(query, "i")</code> instead and type a single{" "}
+            <code>(</code>. The whole search dies with{" "}
+            <code>SyntaxError: Invalid regular expression</code>, because you
+            just let the user write your regex for you. If you genuinely need
+            regex search, escape the input first --{" "}
+            <code>{'query.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")'}</code>{" "}
+            -- and wrap the construction in a try/catch.
           </p>
         </ExerciseBlock>
 

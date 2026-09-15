@@ -211,6 +211,112 @@ const Lecture06 = () => {
             </div>
           </div>
         </Diagram>
+
+        <h3>Media Queries Are Not Only About Width</h3>
+        <p>
+          A media query asks the browser a question. "How wide are you?" is the
+          most common one, but two others are just as useful -- and they ask
+          about the <em>person</em>, not the screen.
+        </p>
+
+        <AnnotatedCode
+          title="Two media queries that respond to the user, not the device"
+          segments={[
+            {
+              code: "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    transition-duration: 0.01ms !important;\n  }\n}\n\n",
+              annotation:
+                "True when the visitor has turned on 'Reduce motion' in their operating system. You met this in week 5 next to @keyframes -- it belongs in the responsive toolkit too, because responding to your user's stated needs is exactly what responsive design means.",
+              label: "Reduced motion",
+            },
+            {
+              code: "@media (prefers-color-scheme: dark) {\n  :root {\n    --bg: #1a202c;\n    --text: #e2e8f0;\n  }\n}\n\n",
+              annotation:
+                "True when the visitor's system is set to dark mode. Combine it with the CSS custom properties from week 4: redefine the tokens here and your whole page adapts, without touching a single component rule.",
+              label: "Dark mode",
+            },
+            {
+              code: "@media (hover: none) {\n  .tooltip { display: none; }\n}",
+              annotation:
+                "True on devices with no hover -- phones and tablets. If a piece of information only appears on :hover, a touch user can never reach it. This query is how you give them an alternative.",
+              label: "No hover",
+            },
+          ]}
+        />
+
+        <h3>Container Queries: Ask the Parent, Not the Page</h3>
+        <p>
+          Here is a problem media queries cannot solve. You build a card that
+          goes from stacked to side-by-side above 400px. Put it in the main
+          column and it looks right. Put the same card in a narrow sidebar on a
+          wide desktop and it goes side-by-side anyway -- because the{" "}
+          <em>page</em> is wide, even though the <em>card</em> is not.
+        </p>
+
+        <Diagram title="Same card, same page width, different container">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 text-sm mb-2">
+                Main column — wide container
+              </h4>
+              <div className="bg-white border border-gray-300 rounded p-2 flex gap-2 items-center">
+                <div className="bg-gray-300 rounded w-12 h-12 shrink-0" />
+                <div className="text-xs text-gray-600">
+                  Image beside the text — correct.
+                </div>
+              </div>
+            </div>
+            <div className="md:w-52 bg-red-50 border-2 border-red-200 rounded-lg p-4">
+              <h4 className="font-bold text-red-700 text-sm mb-2">
+                Sidebar — narrow container
+              </h4>
+              <div className="bg-white border border-gray-300 rounded p-2 flex gap-2 items-center">
+                <div className="bg-gray-300 rounded w-12 h-12 shrink-0" />
+                <div className="text-[10px] text-gray-600 leading-tight">
+                  Squashed — but a media query sees the same wide page and
+                  cannot tell the difference.
+                </div>
+              </div>
+            </div>
+          </div>
+        </Diagram>
+
+        <AnnotatedCode
+          title="Container queries: the component decides for itself"
+          segments={[
+            {
+              code: ".card-wrapper {\n",
+            },
+            {
+              code: "  container-type: inline-size;\n",
+              annotation:
+                "Declares this element a CONTAINER that children can measure themselves against. 'inline-size' means 'track the width'. Nothing looks different yet -- you have just given the children something to ask about.",
+              label: "Declare a container",
+            },
+            {
+              code: "}\n\n",
+            },
+            {
+              code: "@container (min-width: 400px) {\n",
+              annotation:
+                "@container instead of @media. This asks 'is my nearest container at least 400px wide?' -- not 'is the page at least 400px wide?'. Same card, dropped anywhere on the site, now always lays itself out correctly.",
+              label: "@container",
+            },
+            {
+              code: "  .card {\n    display: flex;\n    gap: 1rem;\n  }\n}",
+              annotation:
+                "Side-by-side only when there is genuinely room for it. In a narrow sidebar this rule simply never applies, and the card stays stacked.",
+              label: "The rule",
+            },
+          ]}
+        />
+
+        <InfoBox type="tip">
+          Rule of thumb: use <code>@media</code> for the <strong>page</strong>{" "}
+          layout -- how many columns the whole site has, when the nav collapses.
+          Use <code>@container</code> for <strong>components</strong> that must
+          work anywhere you drop them. Container queries have been supported in
+          every major browser since 2023.
+        </InfoBox>
       </section>
 
       {/* ── Responsive Techniques ── */}
@@ -244,6 +350,41 @@ const Lecture06 = () => {
             },
             {
               code: "  display: block;\n}\n",
+            },
+          ]}
+        />
+
+        <p>
+          Two more things every responsive image should carry. Both were in the
+          image tag you met in week 2 -- here is why they matter on small
+          screens:
+        </p>
+
+        <AnnotatedCode
+          title="Stop the page jumping, stop downloading what nobody sees"
+          segments={[
+            {
+              code: '<img src="photo.jpg" alt="..."\n     ',
+            },
+            {
+              code: 'width="1200" height="800"',
+              annotation:
+                "The real dimensions of the file. Combined with the max-width/height:auto rule above, the browser can work out the aspect ratio BEFORE the image downloads and reserve exactly the right space. Without them the page reflows as each image arrives -- text jumps, and people tap the wrong button.",
+              label: "No layout shift",
+            },
+            { code: "\n     " },
+            {
+              code: 'loading="lazy"',
+              annotation:
+                "Images further down the page are only downloaded when the user scrolls near them. On a long page over a mobile connection this is the single biggest performance win available for one attribute. Leave it off the hero image at the top -- that one you want immediately.",
+              label: "Lazy loading",
+            },
+            { code: " />\n\n" },
+            {
+              code: ".card-image {\n  aspect-ratio: 16 / 9;\n  object-fit: cover;\n}",
+              annotation:
+                "For card grids where every image must be the same shape regardless of the file's real dimensions. aspect-ratio reserves the box, object-fit: cover fills it without distortion (it crops instead of squashing). This replaces the old padding-top percentage hack entirely.",
+              label: "aspect-ratio",
             },
           ]}
         />

@@ -311,10 +311,10 @@ const Lecture01 = () => {
             },
             { code: " " },
             {
-              code: 'target="_blank"',
+              code: 'target="_blank" rel="noopener"',
               annotation:
-                "Another attribute! This one tells the browser to open the link in a NEW TAB instead of the same tab.",
-              label: "Target",
+                'target="_blank" opens the link in a NEW TAB. Pair it with rel="noopener", which stops the new page from getting a reference back to yours. Two habits worth forming: use _blank only for links that leave your site (never for your own pages — you are taking the back button away), and say so in the link text or with an icon, so the new tab is not a surprise.',
+              label: "Target + rel",
             },
             {
               code: ">",
@@ -335,10 +335,15 @@ const Lecture01 = () => {
         />
 
         <InfoBox type="info">
-          Some elements are <strong>self-closing</strong> — no content, no
-          closing tag. Examples: <code>&lt;br /&gt;</code>,{" "}
-          <code>&lt;hr /&gt;</code>, <code>&lt;img /&gt;</code>. Think of them
-          as gifts that are just a card — no box needed.
+          Some elements are <strong>void elements</strong> — no content, no
+          closing tag. Examples: <code>&lt;br&gt;</code>,{" "}
+          <code>&lt;hr&gt;</code>, <code>&lt;img&gt;</code>,{" "}
+          <code>&lt;input&gt;</code>, <code>&lt;meta&gt;</code>. Think of them
+          as gifts that are just a card — no box needed. You will also see them
+          written <code>&lt;br /&gt;</code> with a trailing slash: in HTML5 that
+          slash is simply ignored, so both spellings mean exactly the same
+          thing. It works <em>only</em> on this fixed list of elements —{" "}
+          <code>&lt;div /&gt;</code> does not close anything.
         </InfoBox>
       </section>
 
@@ -465,6 +470,86 @@ const Lecture01 = () => {
           Never skip heading levels! If you have <code>&lt;h2&gt;</code>, the
           next should be <code>&lt;h3&gt;</code>, not <code>&lt;h5&gt;</code>.
           Use CSS to change visual size. Screen readers use levels to navigate.
+        </InfoBox>
+      </section>
+
+      {/* ── Lists ── */}
+      <section>
+        <h2>Lists — When Things Belong Together</h2>
+        <p>
+          Any time you have a set of related items, it is a list. Navigation
+          menus, ingredients, features, steps in a recipe, search results — all
+          lists. Marking them up properly tells a screen reader "list, 5 items"
+          before the user commits to listening to the whole thing.
+        </p>
+
+        <AnnotatedCode
+          title="Unordered, ordered, and nested lists"
+          segments={[
+            {
+              code: "<ul>",
+              annotation:
+                "UNORDERED list — the order does not matter. Renders with bullets by default. Use it for menus, features, tags, anything where you could shuffle the items and the meaning would not change.",
+              label: "<ul>",
+            },
+            { code: "\n  " },
+            {
+              code: "<li>HTML</li>",
+              annotation:
+                "A LIST ITEM. Every direct child of <ul> or <ol> must be an <li> — you cannot put a <p> or a <div> straight inside a list. (You can put them INSIDE an <li>.)",
+              label: "<li>",
+            },
+            { code: "\n  <li>CSS</li>\n  <li>JavaScript</li>\n" },
+            { code: "</ul>\n\n" },
+            {
+              code: "<ol>",
+              annotation:
+                "ORDERED list — the order IS the meaning. Renders as 1, 2, 3. Use it for steps, rankings, or instructions. Never number the items yourself by typing '1.' into the text; the browser does it, and it renumbers automatically when you insert a step.",
+              label: "<ol>",
+            },
+            {
+              code: "\n  <li>Write the HTML</li>\n  <li>Style it with CSS</li>\n  <li>Make it interactive with JavaScript</li>\n</ol>\n\n",
+            },
+            {
+              code: "<ul>\n  <li>Front-End\n    <ul>\n      <li>HTML</li>\n      <li>CSS</li>\n    </ul>\n  </li>\n  <li>Back-End</li>\n</ul>",
+              annotation:
+                "NESTING: a sub-list goes INSIDE the <li> it belongs to, not between two <li> elements. This is how dropdown menus are structured. Getting it wrong is the most common list mistake.",
+              label: "Nesting",
+            },
+          ]}
+        />
+
+        <Diagram title="Which list do I need?">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+              <h4 className="font-bold text-blue-700 mb-2">
+                <code>&lt;ul&gt;</code> — order does not matter
+              </h4>
+              <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+                <li>Navigation menus</li>
+                <li>Product features</li>
+                <li>Tags and categories</li>
+              </ul>
+            </div>
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 mb-2">
+                <code>&lt;ol&gt;</code> — order is the point
+              </h4>
+              <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+                <li>Installation steps</li>
+                <li>A recipe</li>
+                <li>Top 10 rankings</li>
+              </ul>
+            </div>
+          </div>
+        </Diagram>
+
+        <InfoBox type="tip">
+          Do not avoid lists because you dislike the bullets — that is a styling
+          question, and <code>list-style: none</code> removes them in one line
+          while keeping the meaning intact. Choosing <code>&lt;div&gt;</code>s
+          instead throws away information the browser and screen reader were
+          going to give your user for free.
         </InfoBox>
       </section>
 

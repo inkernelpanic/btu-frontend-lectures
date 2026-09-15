@@ -94,6 +94,12 @@ const Lecture15 = () => {
                 "path=/ means this cookie is accessible from any page on the site. Without it, the cookie might only be available on the current page path.",
               label: "Path",
             },
+            {
+              code: "; Secure; SameSite=Lax",
+              annotation:
+                "Two attributes you should add by default. Secure means the cookie is only ever sent over HTTPS, so it cannot be read off an unencrypted connection. SameSite=Lax stops the cookie being sent along with requests started by other websites, which is the main defence against CSRF attacks.",
+              label: "Secure; SameSite",
+            },
             { code: '";\n\n' },
             {
               code: "// Reading cookies -- you get ALL of them as one string!\n",
@@ -120,21 +126,44 @@ const Lecture15 = () => {
         <JsConsole
           code={`// Parsing cookies -- you need a helper function:
 const getCookie = (name) => {
-  const cookies = "username=Ana; theme=dark; language=en"; // simulated
-  const parts = cookies.split("; ");
-  for (const cookie of parts) {
-    const [key, value] = cookie.split("=");
-    if (key === name) return value;
+  // A token is a realistic cookie value -- note the "=" padding at the end.
+  const cookies = "username=Ana; theme=dark; token=YWJjZGVm==";
+  for (const cookie of cookies.split("; ")) {
+    // The WRONG way -- split("=") cuts the value at its first "="
+    const [badKey, badValue] = cookie.split("=");
+
+    // The RIGHT way -- split only at the FIRST "=", keep the rest intact
+    const i = cookie.indexOf("=");
+    const key = cookie.slice(0, i);
+    const value = decodeURIComponent(cookie.slice(i + 1));
+
+    if (key === name) {
+      console.log("  split('='] gives: " + badValue + "   <- truncated!");
+      console.log("  indexOf gives:    " + value);
+      return value;
+    }
+    void badKey;
   }
   return null;
 };
 
 console.log("username:", getCookie("username"));
-console.log("theme:", getCookie("theme"));
-console.log("language:", getCookie("language"));
+console.log("token:", getCookie("token"));
 console.log("missing:", getCookie("pizza"));`}
-          title="Cookies -- parsing the cookie string"
+          title="Cookies -- parsing without destroying the value"
         />
+
+        <InfoBox type="warning">
+          <strong>
+            You cannot set an <code>HttpOnly</code> cookie from JavaScript
+          </strong>
+          , and that is the point. An <code>HttpOnly</code> cookie is invisible
+          to <code>document.cookie</code>, so a successful XSS attack still
+          cannot steal it. Only the server can set one -- which is exactly why
+          login tokens belong in a server-set{" "}
+          <code>HttpOnly; Secure; SameSite</code> cookie, and not in anything
+          your own JavaScript can read.
+        </InfoBox>
 
         <InfoBox type="warning">
           Cookies have a <strong>~4 KB</strong> size limit per cookie and are
@@ -264,7 +293,52 @@ console.log("Total: $" + loadedCart.reduce((s, i) => s + i.price, 0));`}
         <InfoBox type="tip">
           <strong>Pro pattern:</strong> Always wrap <code>JSON.parse()</code> in
           a try/catch! If the stored data is corrupted, your whole app could
-          crash.
+          crash. Here is the helper to write once and reuse everywhere:
+        </InfoBox>
+
+        <JsConsole
+          code={`// Two helpers worth putting in a storage.js file and never rewriting.
+
+const safeGet = (key, fallback = null) => {
+  try {
+    const raw = localStorage.getItem(key);
+    // getItem returns null for a missing key -- JSON.parse(null) is null,
+    // but being explicit is clearer.
+    return raw === null ? fallback : JSON.parse(raw);
+  } catch {
+    // Corrupted or hand-edited value. Do not crash the whole page over it.
+    console.log("Could not parse '" + key + "' -- using the fallback.");
+    return fallback;
+  }
+};
+
+const safeSet = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    // Storage full, or Safari private browsing. setItem THROWS here.
+    console.log("Could not save '" + key + "': " + e.name);
+    return false;
+  }
+};
+
+// Simulate a value someone corrupted by hand:
+localStorage.setItem("settings", "{ this is not json");
+
+console.log("Corrupted read:", safeGet("settings", { theme: "light" }));
+console.log("Missing read:  ", safeGet("nothing-here", "default value"));
+console.log("Write ok?      ", safeSet("settings", { theme: "dark" }));
+console.log("Read back:     ", safeGet("settings"));`}
+          title="safeGet / safeSet -- the only way you should touch storage"
+        />
+
+        <InfoBox type="warning">
+          <code>setItem</code> can <strong>throw</strong>, not just fail
+          silently: browsers cap storage at roughly 5-10 MB per origin, and
+          Safari in private browsing can reject writes outright. A{" "}
+          <code>QuotaExceededError</code> in the middle of saving a form draft
+          will take down everything after it unless you catch it.
         </InfoBox>
       </section>
 
@@ -327,7 +401,12 @@ console.log("  - Data that should NOT persist between visits");`}
               <tbody>
                 {[
                   ["Size limit", "~4 KB", "~5-10 MB", "~5-10 MB"],
-                  ["Lifespan", "Set manually", "Forever", "Until tab closes"],
+                  [
+                    "Lifespan",
+                    "Set manually",
+                    "Until cleared*",
+                    "Until tab closes",
+                  ],
                   ["Sent to server?", "Yes, every request!", "No", "No"],
                   [
                     "Accessible from",
@@ -369,6 +448,13 @@ console.log("  - Data that should NOT persist between visits");`}
               </tbody>
             </table>
           </div>
+          <p className="text-sm text-gray-500 mt-3">
+            * "Until cleared" means until the user clears site data -- not
+            literally forever. Safari's tracking protection also wipes
+            script-written localStorage after about seven days without a visit.
+            Treat it as a durable cache, never as the only copy of anything that
+            matters.
+          </p>
         </Diagram>
       </section>
 

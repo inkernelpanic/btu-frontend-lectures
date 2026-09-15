@@ -13,10 +13,14 @@ const Layout = () => {
         <header className="lg:hidden flex items-center px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
           <button
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={sidebarOpen}
+            aria-controls="sidebar"
             className="p-2 rounded-md text-gray-600 hover:bg-gray-100 cursor-pointer"
           >
             <svg
               className="w-6 h-6"
+              aria-hidden="true"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

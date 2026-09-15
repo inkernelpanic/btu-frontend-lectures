@@ -94,7 +94,9 @@ const Lecture13 = () => {
                 </div>
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                Tasks can overlap. No one waits unnecessarily.
+                The <em>waiting</em> overlaps -- but your JavaScript never runs
+                two things at once. It hands the slow work off (to the network,
+                to a timer) and gets on with the next line.
               </p>
             </div>
           </div>
@@ -117,7 +119,102 @@ console.log("3. Check phone while waiting");
         <InfoBox type="info">
           Even with a 0ms delay, <code>setTimeout</code> runs AFTER the current
           code finishes. JavaScript puts it in a queue and gets back to it when
-          it is free. This is the <strong>event loop</strong> in action!
+          it is free. This is the <strong>event loop</strong> in action -- and
+          it is worth understanding properly, so let's take it apart.
+        </InfoBox>
+      </section>
+
+      {/* ── The Event Loop ── */}
+      <section>
+        <h2>The Event Loop: One Thread, Three Places to Wait</h2>
+        <p>
+          JavaScript is <strong>single-threaded</strong>: there is exactly one
+          call stack, and exactly one thing running at a time. Async does not
+          mean "in parallel" -- it means "come back to this later." The event
+          loop is the rule that decides what "later" means.
+        </p>
+
+        <Diagram title="Call stack, microtask queue, macrotask queue">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+              <h4 className="font-bold text-blue-700 text-sm mb-2">
+                1. Call Stack
+              </h4>
+              <p className="text-xs text-gray-600">
+                Your code, running right now. The event loop cannot do anything
+                while this is non-empty -- which is why an infinite loop freezes
+                the whole page.
+              </p>
+            </div>
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 text-sm mb-2">
+                2. Microtask Queue
+              </h4>
+              <p className="text-xs text-gray-600">
+                Promise callbacks (<code>.then</code>, <code>.catch</code>,{" "}
+                <code>.finally</code>, and everything after an{" "}
+                <code>await</code>). Drained <strong>completely</strong> as soon
+                as the stack empties.
+              </p>
+            </div>
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+              <h4 className="font-bold text-orange-700 text-sm mb-2">
+                3. Macrotask Queue
+              </h4>
+              <p className="text-xs text-gray-600">
+                <code>setTimeout</code>, <code>setInterval</code>, DOM events.
+                Only <strong>one</strong> of these runs per loop turn -- and
+                only after the microtask queue is empty.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <span className="bg-blue-500 text-white px-3 py-2 rounded-lg font-semibold">
+              run all sync code
+            </span>
+            <span className="text-gray-400 font-bold">→</span>
+            <span className="bg-green-600 text-white px-3 py-2 rounded-lg font-semibold">
+              drain ALL microtasks
+            </span>
+            <span className="text-gray-400 font-bold">→</span>
+            <span className="bg-orange-500 text-white px-3 py-2 rounded-lg font-semibold">
+              run ONE macrotask
+            </span>
+            <span className="text-gray-400 font-bold">↺</span>
+          </div>
+        </Diagram>
+
+        <p>
+          That ordering has a consequence you can predict before pressing Run.
+          Read the code below and write down the order you expect:
+        </p>
+
+        <JsConsole
+          code={`console.log("1 - synchronous");
+
+setTimeout(() => {
+  console.log("4 - setTimeout (macrotask)");
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log("3 - promise (microtask)");
+});
+
+console.log("2 - synchronous");
+
+// Order: 1, 2, 3, 4
+// Both the timeout and the promise were scheduled BEFORE line "2",
+// but all synchronous code runs first, then EVERY microtask,
+// and only then the first macrotask -- even with a 0ms delay.`}
+          title="Microtasks jump the queue -- guess the order before you run it"
+        />
+
+        <InfoBox type="tip">
+          This is the mechanism behind "why did my update happen one tick late?"
+          Promise callbacks are fast (same turn of the loop);{" "}
+          <code>setTimeout(fn, 0)</code> is genuinely later. When you need to
+          let the browser paint before doing more work, a macrotask is what you
+          want -- a microtask will not give it the chance.
         </InfoBox>
       </section>
 
@@ -315,24 +412,31 @@ console.log("(Meanwhile, the waiter serves other tables)");`}
             },
             { code: " => {\n" },
             {
-              code: '    console.log("Preparing " + topping + " pizza...");\n',
+              code: '    console.log("Preparing " + topping + " pizza...");\n\n',
             },
-            { code: "    const isAvailable = Math.random() > 0.2;\n\n" },
-            { code: "    if (isAvailable) {\n" },
             {
-              code: '      resolve("Your " + topping + " pizza is ready!");',
+              code: "    setTimeout(() => {\n",
+              annotation:
+                "Real work takes time -- baking a pizza, or waiting for a server. setTimeout stands in for that delay, which is what makes this promise genuinely asynchronous: resolve() is called about a second AFTER orderPizza() has already returned.",
+              label: "The delay",
+            },
+            { code: "      const isAvailable = Math.random() > 0.2;\n\n" },
+            { code: "      if (isAvailable) {\n" },
+            {
+              code: '        resolve("Your " + topping + " pizza is ready!");',
               annotation:
                 "Calling resolve() transitions the promise from Pending to Fulfilled. The value you pass becomes the result.",
               label: "Resolve",
             },
-            { code: "\n    } else {\n" },
+            { code: "\n      } else {\n" },
             {
-              code: '      reject("Sorry, we ran out of " + topping);',
+              code: '        reject(new Error("Sorry, we ran out of " + topping));',
               annotation:
-                "Calling reject() transitions the promise from Pending to Rejected. The value you pass becomes the error reason.",
+                "Always reject with an Error object, never a plain string. Errors carry a .message and a stack trace, and this is what .catch() and (later) try/catch expect -- the same convention you will use with fetch in week 14.",
               label: "Reject",
             },
-            { code: "\n    }\n" },
+            { code: "\n      }\n" },
+            { code: "    }, 1000);\n" },
             { code: "  });\n" },
             { code: "};" },
           ]}
@@ -342,19 +446,28 @@ console.log("(Meanwhile, the waiter serves other tables)");`}
           code={`const orderPizza = (topping) => {
   return new Promise((resolve, reject) => {
     console.log("Preparing " + topping + " pizza...");
-    const isAvailable = Math.random() > 0.2;
 
-    if (isAvailable) {
-      resolve("Your " + topping + " pizza is ready!");
-    } else {
-      reject("Sorry, we ran out of " + topping);
-    }
+    setTimeout(() => {
+      const isAvailable = Math.random() > 0.2;
+
+      if (isAvailable) {
+        resolve("Your " + topping + " pizza is ready!");
+      } else {
+        reject(new Error("Sorry, we ran out of " + topping));
+      }
+    }, 1000);
   });
 };
 
 const myOrder = orderPizza("Margherita");
 console.log("What is myOrder?", typeof myOrder);
-console.log("It is a Promise! We need .then() to get the result.");`}
+console.log("It is a Promise -- pending right now. We need .then() to get the result.");
+
+myOrder
+  .then((message) => console.log("Resolved: " + message))
+  .catch((err) => console.log("Rejected: " + err.message));
+
+console.log("This line runs BEFORE the pizza is ready. Watch the order.");`}
           title="Creating your first Promise"
         />
       </section>
@@ -419,11 +532,14 @@ console.log("It is a Promise! We need .then() to get the result.");`}
   return new Promise((resolve, reject) => {
     const students = { "Ana": 95, "Giorgi": 87, "Nino": 92 };
 
-    if (students[studentName] !== undefined) {
-      resolve({ name: studentName, grade: students[studentName] });
-    } else {
-      reject("Student '" + studentName + "' not found in database!");
-    }
+    // Pretend the database takes half a second to answer.
+    setTimeout(() => {
+      if (students[studentName] !== undefined) {
+        resolve({ name: studentName, grade: students[studentName] });
+      } else {
+        reject(new Error("Student '" + studentName + "' not found in database!"));
+      }
+    }, 500);
   });
 };
 
@@ -433,13 +549,11 @@ fetchGrade("Ana")
     console.log("Found: " + student.name + " has grade " + student.grade);
   })
   .catch((error) => {
-    console.log("Error: " + error);
+    console.log("Error: " + error.message);
   })
   .finally(() => {
     console.log("Database query complete.");
   });
-
-console.log("---");
 
 // Try with a student that DOES NOT exist:
 fetchGrade("Batman")
@@ -447,18 +561,24 @@ fetchGrade("Batman")
     console.log("Found: " + student.name);
   })
   .catch((error) => {
-    console.log("Error: " + error);
+    console.log("Error: " + error.message);
   })
   .finally(() => {
     console.log("Database query complete.");
-  });`}
+  });
+
+console.log("Both queries sent. Neither has answered yet.");`}
           title=".then() / .catch() / .finally() in action"
         />
 
         <InfoBox type="tip">
           <strong>Golden Rule:</strong> Always add a <code>.catch()</code> to
-          your promises! Without it, errors get swallowed silently and you will
-          spend hours debugging mysterious failures.
+          your promises. Without one the browser does log{" "}
+          <code>Uncaught (in promise)</code> to the console -- but your code
+          never gets a chance to recover, so the user is left staring at a
+          spinner that never stops. Also note the rejection value: reject with{" "}
+          <code>new Error(...)</code> and read <code>error.message</code>, the
+          same convention <code>fetch</code> uses next week.
         </InfoBox>
       </section>
 
@@ -506,19 +626,23 @@ fetchGrade("Batman")
         </Diagram>
 
         <JsConsole
-          code={`const getUser = (id) => new Promise((resolve) => {
-  resolve({ id: id, name: "Ana", role: "admin" });
+          code={`// Each step takes 400ms, and each one needs the PREVIOUS step's result,
+// so these must run one after another -- 1200ms in total.
+const getUser = (id) => new Promise((resolve) => {
+  setTimeout(() => resolve({ id: id, name: "Ana", role: "admin" }), 400);
 });
 
 const getOrders = (userId) => new Promise((resolve) => {
-  resolve([
+  setTimeout(() => resolve([
     { id: 101, userId: userId, item: "Laptop", price: 999 },
     { id: 102, userId: userId, item: "Mouse", price: 29 },
-  ]);
+  ]), 400);
 });
 
 const getShippingStatus = (orderId) => new Promise((resolve) => {
-  resolve({ orderId: orderId, status: "Shipped", tracking: "GE-2024-ABC" });
+  setTimeout(() => resolve({
+    orderId: orderId, status: "Shipped", tracking: "GE-2024-ABC"
+  }), 400);
 });
 
 // CHAINED -- flat and beautiful!
@@ -538,7 +662,7 @@ getUser(1)
   })
   .catch((error) => {
     // ONE catch handles errors from ANY step!
-    console.log("Something broke: " + error);
+    console.log("Something broke: " + error.message);
   });`}
           title="Promise chain -- compare this to callback hell!"
         />
@@ -608,20 +732,21 @@ getUser(1)
         </Diagram>
 
         <JsConsole
-          code={`// Three independent data fetches
+          code={`// Three independent data fetches, each with a REAL delay
 const fetchUser = () => new Promise((resolve) => {
-  resolve({ name: "Ana" });
+  setTimeout(() => resolve({ name: "Ana" }), 300);
 });
 
 const fetchPosts = () => new Promise((resolve) => {
-  resolve(["Post 1", "Post 2", "Post 3"]);
+  setTimeout(() => resolve(["Post 1", "Post 2", "Post 3"]), 900);
 });
 
 const fetchNotifications = () => new Promise((resolve) => {
-  resolve({ unread: 5 });
+  setTimeout(() => resolve({ unread: 5 }), 500);
 });
 
 // Run ALL THREE at the same time!
+// Total wait = 900ms (the slowest), NOT 300 + 900 + 500 = 1700ms.
 Promise.all([fetchUser(), fetchPosts(), fetchNotifications()])
   .then(([user, posts, notifications]) => {
     console.log("User: " + user.name);
@@ -638,11 +763,18 @@ Promise.all([fetchUser(), fetchPosts(), fetchNotifications()])
         />
 
         <JsConsole
-          code={`// Promise.race() -- first one wins!
-const fast = new Promise((resolve) => resolve("Fast result!"));
-const slow = new Promise((resolve) => resolve("Slow result..."));
+          code={`// Promise.race() -- first one to SETTLE wins.
+// Note the order in the array: the slow one is listed FIRST,
+// and it still loses. Position does not matter -- time does.
+const slow = new Promise((resolve) => {
+  setTimeout(() => resolve("Slow result... (1200ms)"), 1200);
+});
 
-Promise.race([fast, slow])
+const fast = new Promise((resolve) => {
+  setTimeout(() => resolve("Fast result! (300ms)"), 300);
+});
+
+Promise.race([slow, fast])
   .then((winner) => {
     console.log("Winner: " + winner);
     console.log("");
@@ -650,7 +782,19 @@ Promise.race([fast, slow])
     console.log("  - Adding timeouts to requests");
     console.log("  - Using the fastest of multiple servers");
     console.log("  - Racing a real operation against a deadline");
-  });`}
+  });
+
+// A real timeout, built out of race():
+const withTimeout = (work, ms) => Promise.race([
+  work,
+  new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Timed out after " + ms + "ms")), ms)
+  ),
+]);
+
+withTimeout(slow, 500)
+  .then((value) => console.log("Got: " + value))
+  .catch((err) => console.log("Failed: " + err.message));`}
           title="Promise.race() -- first one wins!"
         />
       </section>

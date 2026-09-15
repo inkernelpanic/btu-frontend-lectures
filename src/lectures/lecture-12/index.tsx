@@ -5,6 +5,7 @@ import InfoBox from "../../components/InfoBox";
 import ExerciseBlock from "../../components/ExerciseBlock";
 import HomeworkBlock from "../../components/HomeworkBlock";
 import JsConsole from "../../components/JsConsole";
+import InteractivePlayground from "../../components/InteractivePlayground";
 
 const Lecture12 = () => {
   return (
@@ -235,6 +236,65 @@ const Lecture12 = () => {
           </div>
         </Diagram>
 
+        <p>
+          "Opens the door to XSS" sounds abstract until you watch it happen.
+          Below, the <em>same string</em> goes into both boxes. Press the button
+          and see what each one does with it:
+        </p>
+
+        <InteractivePlayground
+          language="html"
+          title="Try it: the same string through innerHTML and through textContent"
+          height={300}
+          initialCode={`<style>
+  body { font-family: system-ui; }
+  .box { border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .bad { border-color: #ef4444; background: #fef2f2; }
+  .good { border-color: #22c55e; background: #f0fdf4; }
+  h4 { margin: 0 0 6px; font-size: 13px; }
+</style>
+
+<!-- Pretend a user typed this into a comment box -->
+<p>Pretend a user submitted this as their "name":</p>
+<input id="userInput" style="width:100%"
+       value="<img src=x onerror=&quot;this.replaceWith('I just ran your code.')&quot;>" />
+<button id="render">Render it both ways</button>
+
+<div class="box bad">
+  <h4>el.innerHTML = userInput</h4>
+  <div id="unsafe"></div>
+</div>
+
+<div class="box good">
+  <h4>el.textContent = userInput</h4>
+  <div id="safe"></div>
+</div>
+
+<script>
+  document.getElementById("render").addEventListener("click", () => {
+    const userInput = document.getElementById("userInput").value;
+
+    // The browser PARSES this string as HTML. The onerror handler runs.
+    document.getElementById("unsafe").innerHTML = userInput;
+
+    // The browser treats this string as text. Nothing is parsed, nothing runs.
+    document.getElementById("safe").textContent = userInput;
+  });
+</script>`}
+        />
+
+        <InfoBox type="warning">
+          The attack does not need a <code>&lt;script&gt;</code> tag -- browsers
+          ignore those when inserted via <code>innerHTML</code>, which is
+          exactly why attackers use an <code>onerror</code> on a broken image
+          instead. The rule is simple:{" "}
+          <strong>
+            any value that came from a user goes in through{" "}
+            <code>textContent</code>
+          </strong>
+          . Reserve <code>innerHTML</code> for markup you wrote yourself.
+        </InfoBox>
+
         <Diagram title="Styling: inline vs classList">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
@@ -266,29 +326,53 @@ const Lecture12 = () => {
           </div>
         </Diagram>
 
-        <JsConsole
-          code={`// Quick reference for modifying elements:
+        <InteractivePlayground
+          language="html"
+          title="Try it: a real button that really toggles a class"
+          height={260}
+          initialCode={`<style>
+  .card {
+    font-family: system-ui;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all .2s;
+  }
+  /* The whole visual change lives in CSS... */
+  .card.highlight {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+  button { margin-top: 12px; padding: 6px 12px; cursor: pointer; }
+</style>
 
-// Text & HTML
-// el.textContent = "plain text";      // safe
-// el.innerHTML = "<b>HTML</b>";       // powerful, risky with user input
+<div class="card" id="card">
+  <strong>Click the button.</strong>
+  <p id="status">Class list: card</p>
+  <button id="btn">Toggle highlight</button>
+</div>
 
-// Styles via classes (preferred!)
-// el.classList.add("highlight");
-// el.classList.remove("highlight");
-// el.classList.toggle("highlight");
-// el.classList.contains("highlight");  // returns boolean
+<script>
+  const card = document.getElementById("card");
+  const status = document.getElementById("status");
 
-// Inline styles (use sparingly)
-// el.style.color = "red";
-// el.style.fontSize = "18px";  // note: camelCase, not kebab-case
+  document.getElementById("btn").addEventListener("click", () => {
+    // ...and JavaScript only flips the class on and off.
+    card.classList.toggle("highlight");
 
-console.log("textContent: safe, plain text");
-console.log("innerHTML: parses HTML, never use with user input");
-console.log("classList: the right way to change visual styles");
-console.log("style.*: inline styles, use only when necessary");`}
-          title="Element modification cheat sheet"
+    // classList.contains() returns a boolean -- handy for reacting to state
+    const on = card.classList.contains("highlight");
+    status.textContent = "Class list: " + card.className + "  (highlight: " + on + ")";
+  });
+</script>`}
         />
+
+        <p>
+          Edit the code above and watch the preview update. Try changing{" "}
+          <code>classList.toggle</code> to <code>classList.add</code> -- notice
+          the button now only works once, because <code>add</code> is not a
+          switch.
+        </p>
 
         <InfoBox type="tip">
           Always prefer <code>classList</code> over <code>style</code>. Keep
@@ -342,30 +426,56 @@ console.log("style.*: inline styles, use only when necessary");`}
           ]}
         />
 
-        <JsConsole
-          code={`// Summary of creation methods:
+        <InteractivePlayground
+          language="html"
+          title="Try it: build elements, append them, remove them"
+          height={300}
+          initialCode={`<style>
+  body { font-family: system-ui; }
+  ul { padding-left: 20px; }
+  li { margin: 4px 0; }
+  li button { margin-left: 8px; cursor: pointer; }
+</style>
 
-// document.createElement("tag")  -- create a new element
-// parent.appendChild(child)      -- add at the end
-// parent.prepend(child)          -- add at the beginning
-// parent.insertBefore(new, ref)  -- add before a reference node
-// element.remove()               -- remove from DOM
+<input id="text" placeholder="Type an item..." />
+<button id="add">Add to end</button>
+<button id="addTop">Add to start</button>
 
-// Attributes:
-// el.setAttribute("href", "https://btu.edu.ge")
-// el.getAttribute("href")
-// el.removeAttribute("target")
-// el.hasAttribute("target")
+<ul id="list">
+  <li>Existing item</li>
+</ul>
 
-// Data attributes:
-// HTML: <div data-user-id="42" data-role="admin">
-// JS:   el.dataset.userId  // "42"
-//       el.dataset.role    // "admin"
+<script>
+  const list = document.getElementById("list");
+  const input = document.getElementById("text");
 
-console.log("createElement + appendChild = add to page");
-console.log("element.remove() = remove from page");
-console.log("dataset.* for custom data-* attributes");`}
-          title="Creating, appending, and removing"
+  function makeItem(label) {
+    // Step 1: create (exists only in memory so far)
+    const li = document.createElement("li");
+
+    // Step 2: configure
+    li.textContent = label;
+    li.dataset.createdAt = Date.now();   // data-created-at="..."
+
+    const del = document.createElement("button");
+    del.textContent = "delete";
+    del.addEventListener("click", () => li.remove());   // step 3b: remove
+    li.appendChild(del);
+
+    return li;
+  }
+
+  // Step 3a: attach
+  document.getElementById("add").addEventListener("click", () => {
+    list.appendChild(makeItem(input.value || "Untitled"));
+    input.value = "";
+  });
+
+  document.getElementById("addTop").addEventListener("click", () => {
+    list.prepend(makeItem(input.value || "Untitled"));
+    input.value = "";
+  });
+</script>`}
         />
       </section>
 
@@ -438,21 +548,159 @@ console.log("dataset.* for custom data-* attributes");`}
           ]}
         />
 
-        <JsConsole
-          code={`// The event object contains useful info:
+        <InteractivePlayground
+          language="html"
+          title="Try it: inspect the event object as you interact"
+          height={280}
+          initialCode={`<style>
+  body { font-family: system-ui; }
+  #box { background: #eef2ff; border: 2px solid #6366f1; padding: 20px; margin-bottom: 10px; }
+  #log { font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+</style>
 
-// e.target        -- the element that triggered the event
-// e.type          -- the event type ("click", "submit", etc.)
-// e.key           -- the key pressed (for keyboard events)
-// e.offsetX/Y     -- mouse position relative to the element
-// e.preventDefault()  -- stop default browser behavior
-// e.stopPropagation() -- stop event from bubbling up
+<div id="box">Click anywhere in this box</div>
+<input id="typer" placeholder="...or type here" />
+<div id="log"></div>
 
-console.log("e.target = the element that was interacted with");
-console.log("e.preventDefault() = stop form reload, link navigation, etc.");
-console.log("e.key = which keyboard key was pressed");`}
-          title="The event object"
+<script>
+  const log = document.getElementById("log");
+  const show = (text) => { log.textContent = text; };
+
+  document.getElementById("box").addEventListener("click", (e) => {
+    show(
+      "e.type    = " + e.type + "\\n" +
+      "e.target  = <" + e.target.tagName.toLowerCase() + " id=" + e.target.id + ">\\n" +
+      "e.offsetX = " + e.offsetX + "\\n" +
+      "e.offsetY = " + e.offsetY
+    );
+  });
+
+  document.getElementById("typer").addEventListener("keydown", (e) => {
+    show("e.type = " + e.type + "\\ne.key  = " + e.key);
+  });
+</script>`}
         />
+      </section>
+
+      {/* ── Section 6b: Bubbling & Delegation ── */}
+      <section>
+        <h2>Bubbling, Capturing and Event Delegation</h2>
+        <p>
+          When you click a button inside a list item inside a list, you did not
+          click one element -- you clicked all three. The browser walks the tree
+          twice: down from <code>document</code> to the element you actually hit
+          (<strong>capturing</strong>), then back up again (
+          <strong>bubbling</strong>). Listeners fire on the way up by default.
+        </p>
+
+        <Diagram title="One click, three elements, two directions">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+              <span>capturing ↓</span>
+              <span>bubbling ↑</span>
+            </div>
+            {[
+              { tag: "document", color: "bg-gray-100 border-gray-300 w-full" },
+              {
+                tag: "<ul id='list'>",
+                color: "bg-blue-50 border-blue-300 w-5/6",
+              },
+              { tag: "<li>", color: "bg-green-50 border-green-300 w-3/5" },
+              {
+                tag: "<button> ← you clicked here (e.target)",
+                color: "bg-orange-100 border-orange-400 w-2/5",
+              },
+            ].map((row) => (
+              <div
+                key={row.tag}
+                className={`${row.color} border-2 rounded-lg px-3 py-2 text-center font-mono text-xs text-gray-700`}
+              >
+                {row.tag}
+              </div>
+            ))}
+            <p className="text-sm text-gray-500 mt-2 text-center">
+              A listener on <code>#list</code> hears clicks on every button
+              inside it -- including buttons that did not exist when the
+              listener was added. That is the whole trick.
+            </p>
+          </div>
+        </Diagram>
+
+        <p>
+          This is why <strong>event delegation</strong> matters. The naive
+          approach -- attach one listener per row -- breaks the moment you add
+          rows dynamically, and leaks a handler for every row you ever create.
+          Instead, attach <em>one</em> listener to the parent and ask{" "}
+          <code>e.target</code> what was actually clicked.
+        </p>
+
+        <InteractivePlayground
+          language="html"
+          title="Try it: one listener handles rows that do not exist yet"
+          height={320}
+          initialCode={`<style>
+  body { font-family: system-ui; }
+  li { margin: 4px 0; }
+  li.done span { text-decoration: line-through; color: #94a3b8; }
+  li button { margin-left: 8px; cursor: pointer; }
+</style>
+
+<button id="add">Add a row</button>
+
+<ul id="list">
+  <li><span>First task</span>
+    <button class="done">done</button>
+    <button class="del">delete</button></li>
+</ul>
+
+<p id="note"></p>
+
+<script>
+  const list = document.getElementById("list");
+
+  // ONE listener on the parent -- not one per row.
+  list.addEventListener("click", (e) => {
+    // e.target is the exact element clicked (a button, or the span).
+    // closest() walks UP from it to find the row it belongs to.
+    const li = e.target.closest("li");
+    if (!li) return;
+
+    // matches() asks "is this the button I care about?"
+    if (e.target.matches(".done")) li.classList.toggle("done");
+    if (e.target.matches(".del")) li.remove();
+
+    document.getElementById("note").textContent =
+      "Clicked: " + e.target.tagName.toLowerCase() +
+      "." + e.target.className + " -- handled by the <ul> listener.";
+  });
+
+  // New rows get NO listener of their own, and still work.
+  let n = 2;
+  document.getElementById("add").addEventListener("click", () => {
+    list.insertAdjacentHTML("beforeend",
+      "<li><span>Task " + n++ + "</span>" +
+      "<button class='done'>done</button>" +
+      "<button class='del'>delete</button></li>");
+  });
+</script>`}
+        />
+
+        <InfoBox type="tip">
+          The two methods that make delegation work:{" "}
+          <code>e.target.closest(sel)</code> walks <em>up</em> from the clicked
+          element to find the row/container it lives in, and{" "}
+          <code>e.target.matches(sel)</code> asks whether the clicked element
+          itself is the thing you care about. Without <code>closest()</code>,
+          clicking the text inside a button would give you the wrong element.
+        </InfoBox>
+
+        <InfoBox type="warning">
+          <code>e.stopPropagation()</code> halts the bubble, so any delegated
+          listener further up never hears the event. It is occasionally
+          necessary, but reach for it last -- most "my outer handler is not
+          firing" bugs are a <code>stopPropagation()</code> someone added
+          earlier.
+        </InfoBox>
       </section>
 
       {/* ── Section 7: preventDefault and Forms ── */}

@@ -38,7 +38,7 @@ const Lecture08 = () => {
               },
               {
                 week: "W3",
-                topic: "CSS Selectors & Box Model",
+                topic: "Display, Box Model & Forms",
                 color: "bg-yellow-500 text-gray-800",
               },
               {
@@ -169,7 +169,7 @@ const Lecture08 = () => {
 
       {/* ── CSS Review ── */}
       <section>
-        <h2>Round 2: CSS Selectors & Box Model</h2>
+        <h2>Round 2: Selectors, Box Model & Forms</h2>
 
         <InfoBox type="info">
           <strong>Quick Quiz:</strong> What is the specificity order from lowest
@@ -252,6 +252,56 @@ const Lecture08 = () => {
             },
           ]}
         />
+
+        <h3>Forms Reminder</h3>
+        <p>
+          Week 3 also covered forms, and they are fair game on the exam. The
+          three things people lose marks on:
+        </p>
+
+        <Diagram title="Forms: the three exam traps">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+              <h4 className="font-bold text-red-700 text-sm mb-2">
+                1. Missing <code>name</code>
+              </h4>
+              <p className="text-xs text-gray-600">
+                <code>id</code> is for the label. <code>name</code> is the key
+                the server receives. No <code>name</code>, no data -- the field
+                is silently left out of the submission.
+              </p>
+            </div>
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+              <h4 className="font-bold text-orange-700 text-sm mb-2">
+                2. Label not connected
+              </h4>
+              <p className="text-xs text-gray-600">
+                <code>&lt;label for="email"&gt;</code> must match{" "}
+                <code>&lt;input id="email"&gt;</code>. Connected labels are
+                clickable and are what a screen reader announces.
+              </p>
+            </div>
+            <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+              <h4 className="font-bold text-purple-700 text-sm mb-2">
+                3. Radios not grouped
+              </h4>
+              <p className="text-xs text-gray-600">
+                Radio buttons are mutually exclusive only when they share one{" "}
+                <code>name</code>. Different <code>id</code>, different{" "}
+                <code>value</code>, same <code>name</code>. Wrap the set in{" "}
+                <code>&lt;fieldset&gt;&lt;legend&gt;</code>.
+              </p>
+            </div>
+          </div>
+        </Diagram>
+
+        <InfoBox type="info">
+          <strong>Quick Quiz:</strong> what is the difference between{" "}
+          <code>id</code> and <code>name</code> on an input? Answer:{" "}
+          <code>id</code> connects the input to its <code>&lt;label&gt;</code>{" "}
+          (and to CSS/JS); <code>name</code> is the key the data is submitted
+          under. You usually need both.
+        </InfoBox>
       </section>
 
       {/* ── Flexbox Review ── */}
@@ -563,6 +613,68 @@ const Lecture08 = () => {
         </InfoBox>
       </section>
 
+      {/* ── AI Review ── */}
+      <section>
+        <h2>Round 7: Generative AI & Prompt Engineering</h2>
+        <p>
+          Week 7 is on the exam too. It is not a coding round -- it is about
+          judgment: writing a prompt that gets useful output, and knowing what
+          you are responsible for afterwards.
+        </p>
+
+        <Diagram title="The prompt formula, and what to do with the answer">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 text-sm mb-2">
+                A prompt that works
+              </h4>
+              <p className="text-xs text-gray-600 mb-2">
+                Role + Task + Context + Constraints + Format. Vague in, vague
+                out.
+              </p>
+              <ul className="text-xs text-gray-600 list-disc list-inside space-y-1">
+                <li>Generation: "build X with these exact constraints"</li>
+                <li>
+                  Debugging: minimal snippet + exact symptom + expected
+                  behaviour
+                </li>
+                <li>
+                  Refactoring: "improve this without changing what it does, and
+                  explain each change"
+                </li>
+              </ul>
+            </div>
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+              <h4 className="font-bold text-orange-700 text-sm mb-2">
+                What you owe afterwards
+              </h4>
+              <ul className="text-xs text-gray-600 list-disc list-inside space-y-1">
+                <li>Read it. Run it. Validate the HTML/CSS yourself.</li>
+                <li>Never use code you cannot explain line by line.</li>
+                <li>
+                  Declare your AI use: which tool, which parts, what you
+                  changed.
+                </li>
+                <li>
+                  Presenting AI output wholly as your own work is an
+                  academic-integrity violation.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </Diagram>
+
+        <InfoBox type="info">
+          <strong>Quick Quiz:</strong> the AI hands you{" "}
+          <code>
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))
+          </code>{" "}
+          and it works. Can you say what each part does? If not, that is the gap
+          to close before the exam -- you are graded on your understanding, not
+          on the generated code.
+        </InfoBox>
+      </section>
+
       {/* ── Common Mistakes ── */}
       <section>
         <h2>The Hall of Shame: Common Mistakes</h2>
@@ -627,6 +739,8 @@ const Lecture08 = () => {
                   "Block vs inline elements",
                   "How to make images accessible (alt text)",
                   "Form elements: input types, labels, fieldset",
+                  "id vs name on an input -- which one the server sees",
+                  "Why radio buttons need a shared name",
                 ],
               },
               {
@@ -650,6 +764,16 @@ const Lecture08 = () => {
                   "All 5 position values",
                   "z-index (only works on positioned elements!)",
                   "clamp() for fluid typography",
+                ],
+              },
+              {
+                title: "Generative AI",
+                items: [
+                  "The prompt formula: role, task, context, constraints, format",
+                  "The three parts of a good debugging prompt",
+                  "What refactoring means (and what it must not change)",
+                  "How to validate AI-generated code before using it",
+                  "The course rules on declaring AI use",
                 ],
               },
             ].map((section) => (

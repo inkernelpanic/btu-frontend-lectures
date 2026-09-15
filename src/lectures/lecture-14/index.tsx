@@ -5,6 +5,7 @@ import InfoBox from "../../components/InfoBox";
 import ExerciseBlock from "../../components/ExerciseBlock";
 import HomeworkBlock from "../../components/HomeworkBlock";
 import JsConsole from "../../components/JsConsole";
+import InteractivePlayground from "../../components/InteractivePlayground";
 
 const Lecture14 = () => {
   return (
@@ -265,28 +266,39 @@ console.log("Pretty:\\n" + JSON.stringify(product, null, 2));`}
           ]}
         />
 
-        <JsConsole
-          code={`// Creating a new post on the server (simulated)
+        <InteractivePlayground
+          language="javascript"
+          title="Try it: a real POST to a real server"
+          height={280}
+          initialCode={`// This actually sends a request. Press Run and watch.
 const newPost = {
   title: "My First Blog Post",
   body: "Hello from BTU! This is my very first post.",
   userId: 1,
 };
 
-console.log("Sending POST request...");
-console.log("Data being sent:");
-console.log(JSON.stringify(newPost, null, 2));
-console.log("");
-console.log("In a real app, this would call:");
-console.log("fetch(url, {");
-console.log('  method: "POST",');
-console.log('  headers: { "Content-Type": "application/json" },');
-console.log("  body: JSON.stringify(newPost),");
-console.log("});");
-console.log("");
-console.log("The server would respond with the created object,");
-console.log("usually including a new ID assigned by the server.");`}
-          title="POST request -- sending data"
+async function createPost() {
+  try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPost),
+    });
+
+    // Always check. 201 Created is ok; 404 and 500 are NOT, and fetch
+    // will not complain about them on its own.
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const created = await res.json();
+    console.log("Status:", res.status, res.statusText);
+    console.log("Server sent back:", created);
+    console.log("Notice the id -- the SERVER assigned that, not us.");
+  } catch (err) {
+    console.log("Request failed:", err.message);
+  }
+}
+
+createPost();`}
         />
 
         <InfoBox type="info">
@@ -560,8 +572,15 @@ loadDashboard();`}
             {
               code: "    const res = await fetch(url);",
               annotation:
-                "Send the HTTP request and wait for the response. If the network fails, this throws an error caught by our catch block.",
+                "Send the HTTP request and wait for the response. Note what this does NOT do: a 404 or a 500 is a perfectly successful HTTP round-trip, so fetch resolves happily. Only a network failure rejects.",
               label: "Fetch",
+            },
+            { code: "\n" },
+            {
+              code: '    if (!res.ok) throw new Error("HTTP " + res.status + " " + res.statusText);',
+              annotation:
+                "This line is not optional. Without it a 404 falls through to res.json(), which tries to parse an HTML error page as JSON and throws a confusing SyntaxError -- so your user sees 'Failed to load' and you have no idea why. Throwing here sends a clear message straight to the catch block.",
+              label: "Check res.ok",
             },
             { code: "\n" },
             { code: "    const users = await res.json();\n\n" },
@@ -585,9 +604,9 @@ loadDashboard();`}
             { code: "    });\n\n" },
             { code: "  } catch (err) {\n" },
             {
-              code: '    container.innerHTML = "<p>Failed to load.</p>";',
+              code: '    container.textContent = "Could not load users: " + err.message;',
               annotation:
-                "If anything goes wrong, show a user-friendly error message instead of leaving the page broken.",
+                "Show a user-friendly error -- and include err.message so the reason is visible instead of a generic 'Failed'. Use textContent, not innerHTML: an error message can contain text you did not write.",
               label: "Error UI",
             },
             { code: "\n  }\n}" },
@@ -596,9 +615,144 @@ loadDashboard();`}
 
         <InfoBox type="info">
           The pattern is always the same: (1) show loading state, (2) fetch
-          data, (3) clear container, (4) loop and render, (5) handle errors.
-          Master this pattern and you can build any data-driven page!
+          data, (3) <strong>check res.ok</strong>, (4) clear container, (5) loop
+          and render, (6) handle errors. Master this pattern and you can build
+          any data-driven page!
         </InfoBox>
+      </section>
+
+      {/* ── Three things that bite ── */}
+      <section>
+        <h2>Three Things That Will Bite You</h2>
+        <p>
+          You now know enough to fetch data. These three come up within the
+          first hour of doing it for real.
+        </p>
+
+        <h3>1. CORS: "blocked by CORS policy"</h3>
+        <p>
+          Sooner or later you will fetch some API and get a red console error
+          about CORS, even though the URL works fine when you paste it in the
+          address bar. Nothing is broken in your code.
+        </p>
+
+        <Diagram title="Why the same URL works in the address bar but not in fetch">
+          <div className="space-y-3">
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 text-sm mb-1">
+                Address bar → works
+              </h4>
+              <p className="text-xs text-gray-600">
+                You are just visiting the site. No other page's data is at risk.
+              </p>
+            </div>
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+              <h4 className="font-bold text-red-700 text-sm mb-1">
+                fetch() from your page → blocked
+              </h4>
+              <p className="text-xs text-gray-600">
+                Your page at <code>localhost:5500</code> is asking for data from{" "}
+                <code>some-api.com</code>. The browser will not hand that data
+                to your JavaScript unless the <em>server</em> sends back a{" "}
+                <code>Access-Control-Allow-Origin</code> header saying it is
+                allowed.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 mt-3">
+            CORS is a browser rule, enforced on the response, and{" "}
+            <strong>only the server can lift it</strong>. You cannot fix it from
+            your JavaScript, and you should be suspicious of any StackOverflow
+            answer that claims otherwise. Use an API that allows it (like{" "}
+            <code>jsonplaceholder.typicode.com</code>), or put a small server of
+            your own in between.
+          </p>
+        </Diagram>
+
+        <h3>2. Building URLs by hand</h3>
+        <p>
+          <code>"/search?q=" + query</code> breaks the moment someone types a
+          space, an ampersand, or a Georgian letter.{" "}
+          <code>URLSearchParams</code> encodes everything correctly for you.
+        </p>
+
+        <JsConsole
+          code={`const query = "cats & dogs";
+const page = 2;
+
+// Manual -- broken: the & starts a new parameter
+console.log("Manual: /search?q=" + query + "&page=" + page);
+
+// URLSearchParams -- encodes each value properly
+const params = new URLSearchParams({ q: query, page: page });
+console.log("Encoded: /search?" + params.toString());
+
+// It also reads them back out
+const incoming = new URLSearchParams("?q=cats%20%26%20dogs&page=2");
+console.log("q is:", incoming.get("q"));
+console.log("page is:", incoming.get("page"));`}
+          title="URLSearchParams builds (and reads) query strings safely"
+        />
+
+        <h3>3. Requests you forgot to cancel</h3>
+        <p>
+          A user types in a search box: you fire a request per keystroke. The
+          request for "ca" is slow, the request for "cats" is fast -- so "cats"
+          renders first and then the stale "ca" response overwrites it. The user
+          sees results for something they already finished typing.{" "}
+          <code>AbortController</code> is the fix.
+        </p>
+
+        <AnnotatedCode
+          title="Cancelling the previous request, and giving up on slow ones"
+          segments={[
+            {
+              code: "let controller;\n\n",
+              annotation:
+                "Kept outside the function so each new call can cancel the one before it.",
+              label: "Keep a handle",
+            },
+            { code: "async function search(term) {\n" },
+            {
+              code: "  controller?.abort();\n",
+              annotation:
+                "Cancel whatever is still in flight. The old fetch immediately rejects with an AbortError, so its results never reach the page.",
+              label: "Cancel the old one",
+            },
+            {
+              code: "  controller = new AbortController();\n\n",
+              annotation:
+                "A fresh controller for this request. Each controller can only be used once.",
+              label: "New controller",
+            },
+            { code: "  try {\n" },
+            {
+              code: "    const res = await fetch(url, { signal: controller.signal });\n",
+              annotation:
+                "Passing the signal is what connects this request to the controller. Without it, abort() does nothing.",
+              label: "Pass the signal",
+            },
+            {
+              code: "    if (!res.ok) throw new Error('HTTP ' + res.status);\n",
+            },
+            { code: "    render(await res.json());\n" },
+            { code: "  } catch (err) {\n" },
+            {
+              code: "    if (err.name === 'AbortError') return;\n",
+              annotation:
+                "A cancelled request is not a failure -- it is what you asked for. Return quietly instead of showing the user an error.",
+              label: "Ignore aborts",
+            },
+            { code: "    showError(err.message);\n" },
+            { code: "  }\n}\n\n" },
+            {
+              code: "// A request that gives up on its own after 5 seconds:\nfetch(url, { signal: AbortSignal.timeout(5000) });",
+              annotation:
+                "AbortSignal.timeout() is the short version when all you want is a deadline. Without one, a hanging request leaves your spinner spinning forever.",
+              label: "Timeouts",
+            },
+          ]}
+        />
       </section>
 
       {/* ── Exercises ── */}
@@ -621,15 +775,21 @@ loadDashboard();`}
             <code>/posts/{"{id}"}</code> and its comments from{" "}
             <code>/posts/{"{id}"}/comments</code> using{" "}
             <code>Promise.all()</code>. Display both the post and its comments.
+            Check <code>res.ok</code> on both, and use an{" "}
+            <code>AbortController</code> so that clicking "Fetch" again cancels
+            the request still in flight. Try id <code>999</code> and confirm the
+            user sees a real message, not a blank page.
           </p>
         </ExerciseBlock>
 
         <ExerciseBlock number={3}>
           <p>
             <strong>Parallel Photo Loader:</strong> Fetch the first 20 photos
-            from <code>/photos?_limit=20</code> and all albums from{" "}
-            <code>/albums</code> in parallel. Display the photos in a grid,
-            showing which album each photo belongs to.
+            from <code>/photos</code> and all albums from <code>/albums</code>{" "}
+            in parallel. Build the <code>?_limit=20</code> query string with{" "}
+            <code>URLSearchParams</code> rather than string concatenation.
+            Display the photos in a grid, showing which album each photo belongs
+            to.
           </p>
         </ExerciseBlock>
       </section>

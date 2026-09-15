@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { gitTopics } from "../data/git";
+import NotFound from "./NotFound";
 
 const gitModules = import.meta.glob("../git/*/index.tsx");
 
@@ -24,7 +25,7 @@ const GitPage = () => {
   const GitComponent = topic ? lazyGitPages[topic] : null;
 
   if (!gitTopic || !GitComponent) {
-    return <Navigate to="/git/git-bash" replace />;
+    return <NotFound />;
   }
 
   return (

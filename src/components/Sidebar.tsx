@@ -27,16 +27,21 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       )}
 
       <aside
+        id="sidebar"
         className={`fixed top-0 left-0 z-30 h-full w-72 bg-gray-900 text-gray-100 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="p-5 border-b border-gray-700">
-          <h1 className="text-lg font-bold text-white">BTU Frontend</h1>
-          <p className="text-sm text-gray-400 mt-1">Lecture Materials</p>
+          <NavLink to="/" onClick={onClose} className="block">
+            <span className="text-lg font-bold text-white">BTU Frontend</span>
+            <span className="block text-sm text-gray-400 mt-1">
+              Lecture Materials
+            </span>
+          </NavLink>
         </div>
 
-        <nav className="p-3">
+        <nav className="p-3" aria-label="Course navigation">
           {sections.map((section) => (
             <div key={section.key} className="mb-4">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 px-3 mb-2">

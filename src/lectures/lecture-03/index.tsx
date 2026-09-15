@@ -100,7 +100,7 @@ const Lecture03 = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-800 text-black">
+                <tr className="bg-gray-800 text-white">
                   <th className="p-3 text-left rounded-tl-lg">Property</th>
                   <th className="p-3 text-center">block</th>
                   <th className="p-3 text-center">inline</th>
@@ -402,35 +402,42 @@ const Lecture03 = () => {
             },
             { code: "\n  " },
             {
-              code: '<input type="text" id="name" placeholder="Enter your name" required />',
+              code: '<input type="text" id="name" name="fullName" placeholder="Enter your name" required />',
               annotation:
-                "A text input field. 'type' determines what kind of input (text, email, number...). 'placeholder' shows hint text. 'required' prevents empty submission.",
-              label: "Text Input",
+                "Two different attributes, two different jobs. 'id' connects this input to its <label>. 'name' is the key the server receives — the data arrives as fullName=Ana. An input with no 'name' is NOT sent at all: the browser silently leaves it out of the submission. Forgetting it is the single most common reason a form 'does nothing'.",
+              label: "id vs name",
             },
             { code: '\n\n  <label for="email">Email:</label>\n  ' },
             {
-              code: '<input type="email" id="email" placeholder="you@example.com" />',
+              code: '<input type="email" id="email" name="email" placeholder="you@example.com" />',
               annotation:
                 "The 'email' type adds built-in validation — the browser checks for an @ symbol and valid format. No JavaScript needed!",
               label: "Email Input",
             },
             { code: '\n\n  <label for="pass">Password:</label>\n  ' },
             {
-              code: '<input type="password" id="pass" />',
+              code: '<input type="password" id="pass" name="password" />',
               annotation:
                 "Password type hides the characters as dots. The data is NOT encrypted — that is handled by HTTPS on the server side.",
               label: "Password Input",
             },
             { code: '\n\n  <label for="country">Country:</label>\n  ' },
             {
-              code: '<select id="country">\n    <option value="ge">Georgia</option>\n    <option value="us">United States</option>\n  </select>',
+              code: '<select id="country" name="country">\n    <option value="ge">Georgia</option>\n    <option value="us">United States</option>\n  </select>',
               annotation:
                 "A dropdown menu. Each <option> is one choice. The 'value' is what gets sent to the server, the text between tags is what the user sees.",
               label: "Select Dropdown",
             },
             { code: "\n\n  " },
             {
-              code: '<textarea id="bio" rows="3" placeholder="Tell us about yourself..."></textarea>',
+              code: '<fieldset>\n    <legend>Choose a plan</legend>\n\n    <input type="radio" id="plan-free" name="plan" value="free" checked />\n    <label for="plan-free">Free</label>\n\n    <input type="radio" id="plan-pro" name="plan" value="pro" />\n    <label for="plan-pro">Pro</label>\n  </fieldset>',
+              annotation:
+                "Radio buttons become ONE group by sharing the same 'name' — that is what makes them mutually exclusive. Give them different 'id' values (for the labels) and different 'value' values (that is what the server receives: plan=pro). <fieldset> + <legend> groups them visually and tells a screen reader what the whole group is asking.",
+              label: "Radio Group",
+            },
+            { code: "\n\n  " },
+            {
+              code: '<textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>',
               annotation:
                 "A multi-line text area. Use 'rows' to set the visible height. Unlike <input>, textarea has a closing tag.",
               label: "Textarea",
@@ -445,6 +452,18 @@ const Lecture03 = () => {
             { code: "\n\n</form>" },
           ]}
         />
+
+        <InfoBox type="warning">
+          <strong>
+            Every control that should send data needs a <code>name</code>
+          </strong>
+          . <code>id</code> is for the page (labels, CSS, JavaScript);{" "}
+          <code>name</code> is for the server. A field with only an{" "}
+          <code>id</code> looks perfectly normal, validates normally, submits
+          without complaint -- and simply is not in the data that arrives. When
+          a form "works but nothing shows up on the backend", this is almost
+          always why.
+        </InfoBox>
 
         <Diagram title="Form Input Types Cheat Sheet">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -636,11 +655,15 @@ const Lecture03 = () => {
             and a select dropdown
           </li>
           <li>
-            Add a textarea, checkbox, radio buttons, and submit/reset buttons
+            Add a textarea, checkbox, submit/reset buttons, and a radio group
+            wrapped in <code>&lt;fieldset&gt;&lt;legend&gt;</code> -- all radios
+            in the group must share one <code>name</code> and have different{" "}
+            <code>value</code>s
           </li>
           <li>
-            Every field must have a label. Use <code>required</code> on
-            mandatory fields
+            Every field must have a label <strong>and</strong> a{" "}
+            <code>name</code> attribute. Use <code>required</code> on mandatory
+            fields
           </li>
           <li>
             Style inputs with consistent width (100%), padding, margin, and

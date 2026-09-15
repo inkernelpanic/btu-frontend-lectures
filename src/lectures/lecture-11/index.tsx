@@ -79,7 +79,10 @@ const Lecture11 = () => {
                 const greet = function(name) {"{ ... }"};
               </code>
               <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
-                <li>NOT hoisted -- must be defined before use</li>
+                <li>
+                  In the temporal dead zone until the line runs -- must be
+                  defined before use
+                </li>
                 <li>Stored in a variable</li>
                 <li>Good for callbacks and object methods</li>
               </ul>
@@ -88,7 +91,7 @@ const Lecture11 = () => {
         </Diagram>
 
         <JsConsole
-          code={`// DECLARATION -- hoisted! Can call before definition.
+          code={`// DECLARATION -- fully hoisted. Can call before definition.
 greet("Alice");
 
 function greet(name) {
@@ -97,17 +100,49 @@ function greet(name) {
 
 greet("Bob");
 
-// EXPRESSION -- NOT hoisted. Must define before calling.
-// sayHi("Alice");  // Would crash!
+// EXPRESSION -- the NAME is hoisted, but the value is not assigned yet.
+// Uncomment the next line to see the exact error:
+// sayHi("Alice");
+// ReferenceError: Cannot access 'sayHi' before initialization
 
 const sayHi = function(name) {
   console.log(\`Hi, \${name}!\`);
 };
 
 sayHi("Alice");
-sayHi("Bob");`}
-          title="Declaration (hoisted) vs Expression (not hoisted)"
+sayHi("Bob");
+
+// Compare the two failure modes -- they are NOT the same error:
+try {
+  tdz();                       // const/let: temporal dead zone
+} catch (e) {
+  console.log(e.constructor.name + ": " + e.message);
+}
+const tdz = function () {};
+
+try {
+  legacy();                    // var: hoisted and initialised to undefined
+} catch (e) {
+  console.log(e.constructor.name + ": " + e.message);
+}
+var legacy = function () {};`}
+          title="Declaration vs Expression -- and the two different errors"
         />
+
+        <InfoBox type="info">
+          <strong>"Not hoisted" is a useful lie.</strong> The{" "}
+          <code>const sayHi</code> binding <em>is</em> hoisted to the top of its
+          block -- it just sits in the <strong>temporal dead zone (TDZ)</strong>{" "}
+          until the line that assigns it actually runs. That is why you get{" "}
+          <code>
+            ReferenceError: Cannot access 'sayHi' before initialization
+          </code>{" "}
+          and not "sayHi is not defined". With <code>var</code> you would get a{" "}
+          <code>TypeError: sayHi is not a function</code> instead, because{" "}
+          <code>var</code> hoists <em>and</em> initialises to{" "}
+          <code>undefined</code>. Two different errors, two different causes --
+          recognising which one you have tells you what to fix.
+        </InfoBox>
 
         <InfoBox type="info">
           <strong>When to use which?</strong> Declarations are great for

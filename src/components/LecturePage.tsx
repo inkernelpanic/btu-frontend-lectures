@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { lectures } from "../data/lectures";
+import NotFound from "./NotFound";
 
 const lectureModules = import.meta.glob("../lectures/lecture-*/index.tsx");
 
@@ -24,7 +25,7 @@ const LecturePage = () => {
   const LectureComponent = id ? lazyLectures[id] : null;
 
   if (!lecture || !LectureComponent) {
-    return <Navigate to="/lectures/01" replace />;
+    return <NotFound />;
   }
 
   return (

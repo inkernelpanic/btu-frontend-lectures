@@ -182,6 +182,157 @@ console.log("nested city still:", nested.address.city);  // "Batumi" (safe!)`}
           objects. Use <code>structuredClone()</code> when objects contain
           nested objects or arrays.
         </InfoBox>
+
+        <h3>What structuredClone Cannot Do</h3>
+        <p>
+          <code>structuredClone()</code> copies data, not behaviour. Hand it
+          something that is not pure data and it throws -- loudly, which is
+          better than the alternative you will find on StackOverflow.
+        </p>
+
+        <JsConsole
+          code={`// 1. Functions cannot be cloned -- this THROWS.
+try {
+  structuredClone({ name: "Ana", greet: () => "hi" });
+} catch (e) {
+  console.log(e.constructor.name + ": functions can't be cloned");
+}
+
+// DOM elements and class instances have the same problem:
+// a class instance survives, but loses its prototype -- the methods are gone.
+
+// 2. The pattern you will find online: JSON.parse(JSON.stringify(x))
+const original = {
+  when: new Date("2026-01-01"),
+  missing: undefined,
+  notANumber: NaN,
+  tags: new Set(["a", "b"]),
+};
+
+const jsonCopy = JSON.parse(JSON.stringify(original));
+
+console.log("Date became a:", typeof jsonCopy.when);     // string!
+console.log("undefined key survived?", "missing" in jsonCopy); // false!
+console.log("NaN became:", jsonCopy.notANumber);          // null!
+console.log("Set became:", JSON.stringify(jsonCopy.tags)); // {} -- empty!
+
+// structuredClone handles all four correctly:
+const good = structuredClone(original);
+console.log("structuredClone keeps the Date:", good.when instanceof Date);
+console.log("and the Set:", good.tags instanceof Set);`}
+          title="structuredClone vs the JSON trick -- what each one destroys"
+        />
+
+        <InfoBox type="tip">
+          The JSON round-trip is silent: it does not throw, it just quietly
+          hands you a Date that is now a string. That bug surfaces hours later,
+          somewhere else. Prefer <code>structuredClone()</code>, which fails
+          immediately on anything it cannot handle honestly.
+        </InfoBox>
+      </section>
+
+      {/* ── Destructuring & modern access ── */}
+      <section>
+        <h2>Destructuring, ?. and ??</h2>
+        <p>
+          Three pieces of syntax you will see in every modern codebase --
+          including in the promise and fetch lectures later in this course.
+          Learn them here and the rest of the term reads much more easily.
+        </p>
+
+        <h3>Destructuring: unpacking into variables</h3>
+
+        <AnnotatedCode
+          title="Pulling values out of objects and arrays"
+          segments={[
+            {
+              code: 'const user = { name: "Ana", age: 22, city: "Tbilisi" };\n\n',
+            },
+            {
+              code: "// The long way\nconst name = user.name;\nconst age = user.age;\n\n",
+            },
+            {
+              code: "const { name, age } = user;",
+              annotation:
+                "Object destructuring. The names in the braces must match the KEYS in the object -- order is irrelevant. This is one line instead of two, and it scales to ten properties just as easily.",
+              label: "Object",
+            },
+            { code: "\n\n" },
+            {
+              code: "const { city: hometown } = user;",
+              annotation:
+                "Renaming: 'take the city property, but call my variable hometown'. Useful when two objects both have a 'name' and you need both in the same scope.",
+              label: "Renaming",
+            },
+            { code: "\n\n" },
+            {
+              code: 'const { country = "Georgia" } = user;',
+              annotation:
+                'A default. If user.country is undefined, country becomes "Georgia". Note: the default fires on undefined only -- null does NOT trigger it.',
+              label: "Defaults",
+            },
+            { code: "\n\n" },
+            {
+              code: 'const [first, second] = ["gold", "silver", "bronze"];',
+              annotation:
+                "Array destructuring matches by POSITION, not by name. This is the syntax you will meet again in Promise.all([...]).then(([a, b]) => ...) -- now you know what it is doing.",
+              label: "Array",
+            },
+            { code: "\n\n" },
+            {
+              code: "const { name: n, ...rest } = user;",
+              annotation:
+                "Rest: 'name' comes out on its own, and everything else lands in a new object called rest. Handy for stripping one field off an object without mutating it.",
+              label: "Rest",
+            },
+          ]}
+        />
+
+        <h3>Optional chaining and nullish coalescing</h3>
+        <p>
+          Earlier we reached into <code>nested.address.city</code>. That works
+          until <code>address</code> is missing -- and then it does not fail
+          politely, it throws and takes the page down with it.
+        </p>
+
+        <JsConsole
+          code={`const users = [
+  { name: "Ana", address: { city: "Tbilisi" }, posts: 0, nickname: "" },
+  { name: "Giorgi" },   // no address, no posts, no nickname
+];
+
+// ?. -- optional chaining: stop and return undefined instead of throwing
+for (const u of users) {
+  // u.address.city would throw a TypeError on Giorgi
+  console.log(u.name + " lives in: " + u.address?.city);
+}
+
+console.log("---");
+
+// ?? -- nullish coalescing: a default for null/undefined ONLY
+for (const u of users) {
+  console.log(u.name + " city: " + (u.address?.city ?? "unknown"));
+}
+
+console.log("--- ?? vs || : the trap ---");
+
+const ana = users[0];
+// || treats 0 and "" as "missing" -- almost always wrong
+console.log("posts with || :", ana.posts || "no posts yet");     // "no posts yet" -- WRONG, she has 0
+console.log("posts with ?? :", ana.posts ?? "no posts yet");     // 0 -- correct
+console.log("nickname with ||:", ana.nickname || "(none)");      // "(none)"
+console.log("nickname with ??:", ana.nickname ?? "(none)");      // "" -- the empty string she actually set`}
+          title="?. and ?? -- and why || is not the same thing"
+        />
+
+        <InfoBox type="warning">
+          <code>||</code> falls back on every <strong>falsy</strong> value --
+          including <code>0</code>, <code>""</code> and <code>false</code>,
+          which are often legitimate data. <code>??</code> falls back only on{" "}
+          <code>null</code> and <code>undefined</code>. When the value could
+          genuinely be zero or an empty string -- a count, a price, a note --{" "}
+          <code>??</code> is the one you want.
+        </InfoBox>
       </section>
 
       {/* ── Section 3: Arrays ── */}
@@ -582,6 +733,71 @@ for (let i = 0; i < 10; i++) {
           Use <code>for...in</code> for <strong>objects</strong> (gives keys).
           Do not use <code>for...in</code> on arrays -- it can produce
           unexpected results.
+        </InfoBox>
+
+        <h3>A Better Way to Loop Over Objects</h3>
+        <p>
+          <code>for...in</code> gives you keys, so you are always writing{" "}
+          <code>obj[key]</code> to get the value -- and it also walks inherited
+          properties, which is the "unexpected results" warning above.{" "}
+          <code>Object.entries()</code> plus destructuring gives you both at
+          once, and only the object's own properties.
+        </p>
+
+        <JsConsole
+          code={`const person = { name: "Alice", age: 25, city: "Tbilisi" };
+
+// Object.keys   -> ["name", "age", "city"]
+// Object.values -> ["Alice", 25, "Tbilisi"]
+// Object.entries-> [["name","Alice"], ["age",25], ["city","Tbilisi"]]
+
+console.log("keys:  ", Object.keys(person));
+console.log("values:", Object.values(person));
+
+// entries + destructuring = key AND value, no obj[key] lookup
+for (const [key, value] of Object.entries(person)) {
+  console.log(key + " -> " + value);
+}
+
+// And back again -- turn a list of pairs into an object.
+// You will use this in week 16 to read a whole form at once.
+const pairs = [["theme", "dark"], ["lang", "ka"]];
+console.log("fromEntries:", Object.fromEntries(pairs));`}
+          title="Object.keys / values / entries / fromEntries"
+        />
+
+        <h3>Four More Array Methods Worth Knowing</h3>
+
+        <JsConsole
+          code={`const scores = [90, 55, 78, 100, 42];
+
+// .at() -- negative indexes count from the end.
+// No more arr[arr.length - 1].
+console.log("last:", scores.at(-1));
+console.log("second to last:", scores.at(-2));
+
+// .some() -- is AT LEAST ONE true?
+console.log("anyone failed?", scores.some(s => s < 50));
+
+// .every() -- are ALL of them true?
+console.log("everyone passed?", scores.every(s => s >= 50));
+
+// .sort() -- WARNING: by default it sorts as TEXT
+console.log("default sort:", [...scores].sort());        // 100 comes before 42!
+console.log("numeric sort:", [...scores].sort((a, b) => a - b));
+
+// Note the [...scores] copies: sort() MUTATES the array it is given.
+console.log("original untouched:", scores);`}
+          title=".at(), .some(), .every(), and the .sort() trap"
+        />
+
+        <InfoBox type="warning">
+          <code>sort()</code> converts everything to strings first, so{" "}
+          <code>[10, 9, 100].sort()</code> gives you <code>[10, 100, 9]</code>.
+          For numbers always pass a comparator:{" "}
+          <code>{"sort((a, b) => a - b)"}</code>. And remember it sorts{" "}
+          <em>in place</em> -- copy with <code>[...arr]</code> first if you need
+          the original order later.
         </InfoBox>
       </section>
 

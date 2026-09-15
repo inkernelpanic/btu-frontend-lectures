@@ -445,8 +445,22 @@ const Lecture05 = () => {
                 "When the button is actively being pressed down, it snaps back to its original position and the shadow disappears. This gives the feel of a physical button press.",
               label: ":active",
             },
+            {
+              code: "\n.btn:focus-visible {\n  outline: 3px solid #2980b9;\n  outline-offset: 2px;\n}\n",
+              annotation:
+                "The keyboard equivalent of :hover. A user tabbing through your page needs to SEE where they are -- without this they are navigating blind. Use :focus-visible rather than :focus: the browser then shows the ring for keyboard users but not on mouse clicks, which is the reason people used to remove focus rings in the first place.",
+              label: ":focus-visible",
+            },
           ]}
         />
+
+        <InfoBox type="warning">
+          Never write <code>outline: none</code> without putting a visible focus
+          style back. Try it now: press Tab on any page and watch the ring move.
+          That ring is the <em>only</em> way a keyboard user knows where they
+          are -- deleting it makes your site unusable for them, and it is one of
+          the most common accessibility failures on the web.
+        </InfoBox>
 
         <h3>Structural Pseudo-Classes: :nth-child, :first-child, :not()</h3>
         <p>
@@ -609,8 +623,13 @@ const Lecture05 = () => {
         <InfoBox type="warning">
           <code>::before</code> and <code>::after</code> always need{" "}
           <code>content: ""</code> -- even if it is empty! Without it, they
-          simply will not render. Also, they are purely decorative -- screen
-          readers skip them, so never put important information in them.
+          simply will not render. And do not treat them as invisible to
+          assistive technology: modern screen readers generally{" "}
+          <strong>do</strong> announce the text in <code>content</code>, but
+          support is inconsistent, generated text cannot be selected or
+          translated, and it is invisible to search engines. Use them for
+          decoration and visual flourishes -- never for information the reader
+          actually needs.
         </InfoBox>
 
         <Diagram title="Pseudo-class vs Pseudo-element -- know the difference!">
@@ -823,6 +842,52 @@ const Lecture05 = () => {
           ]}
         />
 
+        <h3>Respecting prefers-reduced-motion</h3>
+        <p>
+          Motion is not neutral. For people with vestibular disorders, spinning
+          and sliding elements can trigger real nausea and dizziness -- which is
+          why every operating system has a "reduce motion" setting. The browser
+          hands you that setting; all you have to do is listen.
+        </p>
+
+        <AnnotatedCode
+          title="One block, added once, that covers your whole stylesheet"
+          segments={[
+            {
+              code: "@media (prefers-reduced-motion: reduce) {\n",
+              annotation:
+                "A media query that asks about the USER, not the screen. It is true when the visitor has turned on 'Reduce motion' in their OS accessibility settings. You are not guessing -- they told you.",
+              label: "The query",
+            },
+            {
+              code: "  *,\n  *::before,\n  *::after {\n",
+              annotation:
+                "Everything, including pseudo-elements. This is the one place where the universal selector is the right tool.",
+              label: "Everything",
+            },
+            {
+              code: "    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n",
+              annotation:
+                "Near-zero rather than 'none': the animation still technically runs and still fires its animationend event, so JavaScript that waits for that event does not hang. iteration-count: 1 is what stops an infinite spinner from looping forever.",
+              label: "Near-instant",
+            },
+            {
+              code: "    scroll-behavior: auto !important;\n  }\n}",
+              annotation:
+                "Smooth scrolling is motion too. This turns it back into an instant jump.",
+              label: "Scrolling",
+            },
+          ]}
+        />
+
+        <InfoBox type="tip">
+          Paste this at the bottom of every stylesheet you write from now on. It
+          is four lines, it needs no per-animation work, and it is the single
+          highest-value accessibility rule in CSS. If a loading spinner is
+          essential, prefer a non-moving alternative for these users -- a
+          progress bar that fills, or simply the word "Loading...".
+        </InfoBox>
+
         <Diagram title="Transition vs @keyframes -- when to use which">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
@@ -972,6 +1037,16 @@ const Lecture05 = () => {
               (::after + transition).
             </li>
             <li>Bonus: add a spinning CSS loader below the buttons.</li>
+            <li>
+              Every button must have a visible <code>:focus-visible</code> style
+              -- Tab through them with the keyboard and check you can always see
+              where you are.
+            </li>
+            <li>
+              Add the <code>prefers-reduced-motion</code> block at the bottom of
+              your stylesheet. Turn "Reduce motion" on in your OS settings and
+              confirm the pulsing and spinning stop.
+            </li>
           </ul>
         </ExerciseBlock>
       </section>

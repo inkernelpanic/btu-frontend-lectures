@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { shortcutPages, type OS } from "../data/shortcuts";
 import Diagram from "./Diagram";
 import InfoBox from "./InfoBox";
+import NotFound from "./NotFound";
 
 const ShortcutsPage = () => {
   const { category } = useParams<{ category: string }>();
@@ -10,8 +11,12 @@ const ShortcutsPage = () => {
 
   const page = shortcutPages.find((p) => p.id === category);
 
+  useEffect(() => {
+    if (page) document.title = `${page.title} — BTU Frontend`;
+  }, [page]);
+
   if (!page) {
-    return <Navigate to="/lectures/01" replace />;
+    return <NotFound />;
   }
 
   return (
@@ -50,7 +55,8 @@ const ShortcutsPage = () => {
 
       {page.id === "terminal" && (
         <InfoBox type="info">
-          Commands marked the same for both OS work identically on Windows (Command Prompt / PowerShell) and macOS / Linux Terminal.
+          Commands marked the same for both OS work identically on Windows
+          (Command Prompt / PowerShell) and macOS / Linux Terminal.
         </InfoBox>
       )}
 
@@ -59,7 +65,9 @@ const ShortcutsPage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b border-gray-200">
-                <th className="pb-2 font-semibold text-gray-600 w-1/2">Action</th>
+                <th className="pb-2 font-semibold text-gray-600 w-1/2">
+                  Action
+                </th>
                 <th className="pb-2 font-semibold text-gray-600">Shortcut</th>
               </tr>
             </thead>

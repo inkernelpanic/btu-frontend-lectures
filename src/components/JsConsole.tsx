@@ -1,37 +1,51 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface JsConsoleProps {
   code: string;
   title?: string;
 }
 
+const format = (args: unknown[]) =>
+  args
+    .map((a) =>
+      typeof a === "object" ? JSON.stringify(a, null, 2) : String(a),
+    )
+    .join(" ");
+
 const JsConsole = ({ code, title = "JavaScript Console" }: JsConsoleProps) => {
   const [output, setOutput] = useState<string[]>([]);
   const [hasRun, setHasRun] = useState(false);
+  // Each run gets its own id, so logs arriving late from a previous run
+  // (setTimeout, promises) are discarded instead of mixing into the new output.
+  const runId = useRef(0);
 
   const runCode = () => {
-    const logs: string[] = [];
+    runId.current += 1;
+    const thisRun = runId.current;
+    setOutput([]);
+    setHasRun(true);
+
+    // Append through a state updater rather than a local array: async callbacks
+    // fire long after runCode() has returned, so anything collected in a closure
+    // array would never reach React.
+    const append = (line: string) => {
+      if (runId.current !== thisRun) return;
+      setOutput((prev) => [...prev, line]);
+    };
+
     const fakeConsole = {
-      log: (...args: unknown[]) => {
-        logs.push(
-          args
-            .map((a) =>
-              typeof a === "object" ? JSON.stringify(a, null, 2) : String(a),
-            )
-            .join(" "),
-        );
-      },
+      log: (...args: unknown[]) => append(format(args)),
+      info: (...args: unknown[]) => append(format(args)),
+      warn: (...args: unknown[]) => append(`⚠️ ${format(args)}`),
+      error: (...args: unknown[]) => append(`❌ ${format(args)}`),
     };
 
     try {
       const fn = new Function("console", code);
       fn(fakeConsole);
     } catch (e) {
-      logs.push(`❌ Error: ${(e as Error).message}`);
+      append(`❌ Error: ${(e as Error).message}`);
     }
-
-    setOutput(logs);
-    setHasRun(true);
   };
 
   return (

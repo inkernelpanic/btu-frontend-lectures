@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface InteractivePlaygroundProps {
   initialCode: string;
@@ -16,15 +16,16 @@ const InteractivePlayground = ({
   const [code, setCode] = useState(initialCode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const getPreviewHtml = (src: string) => {
-    if (language === "css") {
-      return `<!DOCTYPE html><html><head><style>${src}</style></head><body><div class="demo">
+  const getPreviewHtml = useCallback(
+    (src: string) => {
+      if (language === "css") {
+        return `<!DOCTYPE html><html><head><style>${src}</style></head><body><div class="demo">
         <h1>Hello World</h1><p>This is a paragraph.</p>
         <button>Click me</button><a href="#">A link</a>
       </div></body></html>`;
-    }
-    if (language === "javascript") {
-      return `<!DOCTYPE html><html><head><style>
+      }
+      if (language === "javascript") {
+        return `<!DOCTYPE html><html><head><style>
         body { font-family: system-ui; padding: 12px; margin: 0; }
         #output { white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.6; }
         .log-line { padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
@@ -38,15 +39,17 @@ console.log = (...args) => {
 };
 try { ${src} } catch(e) { _lines.push('<div class="log-line error">Error: ' + e.message + '</div>'); document.getElementById('output').innerHTML = _lines.join(''); }
 </script></body></html>`;
-    }
-    return src;
-  };
+      }
+      return src;
+    },
+    [language],
+  );
 
   useEffect(() => {
     if (iframeRef.current) {
       iframeRef.current.srcdoc = getPreviewHtml(code);
     }
-  }, [code, language]);
+  }, [code, getPreviewHtml]);
 
   const handleReset = () => setCode(initialCode);
 

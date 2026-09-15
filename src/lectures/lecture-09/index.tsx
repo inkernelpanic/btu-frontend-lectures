@@ -277,10 +277,11 @@ let count = 0;
 count = count + 1;
 console.log("count:", count);
 
-// Naming rules: camelCase is the JS convention
-let firstName = "Alice";
-let isLoggedIn = true;
-let MAX_RETRY = 5;  // ALL_CAPS for true constants
+// Naming rules: camelCase is the JS convention.
+// Note these are all const -- nothing here is ever reassigned.
+const firstName = "Alice";
+const isLoggedIn = true;
+const MAX_RETRY = 5;  // ALL_CAPS for true constants
 console.log(firstName, isLoggedIn, MAX_RETRY);`}
           title="const and let in practice"
         />
@@ -289,6 +290,70 @@ console.log(firstName, isLoggedIn, MAX_RETRY);`}
           <strong>Golden rule:</strong> use <code>const</code> by default. Only
           switch to <code>let</code> when you genuinely need to reassign. Never
           use <code>var</code>.
+        </InfoBox>
+
+        <h3>Hoisting and the Temporal Dead Zone</h3>
+        <p>
+          Before your code runs, JavaScript scans each scope and sets aside a
+          slot for every declaration it finds. That is <strong>hoisting</strong>
+          . What differs is <em>what is in the slot</em> before the declaration
+          line actually executes.
+        </p>
+
+        <Diagram title="What the slot holds before the declaration runs">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+              <h4 className="font-bold text-red-700 text-sm mb-2">var</h4>
+              <p className="text-xs text-gray-600">
+                Slot exists and holds <code>undefined</code>. Reading it gives
+                you <code>undefined</code> instead of an error -- so the bug
+                shows up somewhere else, later.
+              </p>
+            </div>
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+              <h4 className="font-bold text-green-700 text-sm mb-2">
+                let / const
+              </h4>
+              <p className="text-xs text-gray-600">
+                Slot exists but is marked unusable -- the{" "}
+                <strong>temporal dead zone</strong>. Reading it throws
+                immediately, pointing straight at the mistake.
+              </p>
+            </div>
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+              <h4 className="font-bold text-blue-700 text-sm mb-2">
+                function declarations
+              </h4>
+              <p className="text-xs text-gray-600">
+                Slot holds the whole function already. This is why you can call
+                a <code>function</code> declared further down the file.
+              </p>
+            </div>
+          </div>
+        </Diagram>
+
+        <JsConsole
+          code={`// var: hoisted AND initialised to undefined -- no error, just a wrong value
+console.log("var before declaration:", typeof legacyVar, legacyVar);
+var legacyVar = "I was declared later";
+
+// let/const: hoisted but in the temporal dead zone -- reading it throws
+try {
+  console.log(modern);
+} catch (e) {
+  console.log(e.constructor.name + ": " + e.message);
+}
+let modern = "I was declared later too";
+
+console.log("After their declarations:", legacyVar, "/", modern);`}
+          title="Why 'never use var' is not just style advice"
+        />
+
+        <InfoBox type="tip">
+          The TDZ is a feature, not an annoyance. <code>var</code> hands you{" "}
+          <code>undefined</code> and lets your program keep running with wrong
+          data; <code>let</code> and <code>const</code> stop you on the exact
+          line where you used a variable too early.
         </InfoBox>
       </section>
 

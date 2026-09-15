@@ -152,7 +152,10 @@ const Lecture02 = () => {
               label: "Nav",
             },
             {
-              code: '\n    <a href="#">Home</a>\n    <a href="#">About</a>\n    <a href="#">Contact</a>\n  </nav>\n</header>\n\n',
+              code: '\n    <ul>\n      <li><a href="#">Home</a></li>\n      <li><a href="#">About</a></li>\n      <li><a href="#">Contact</a></li>\n    </ul>\n  </nav>\n</header>\n\n',
+              annotation:
+                "A navigation menu is a list of links, so mark it up as one. A screen reader then announces 'list, 3 items' and the user knows how much menu there is before they start. Bare <a> tags inside <nav> work visually but give that away. (Remove the bullets with list-style: none in CSS — the semantics stay.)",
+              label: "Nav = a list of links",
             },
             {
               code: "<main>",
@@ -208,11 +211,74 @@ const Lecture02 = () => {
 
       {/* ── HTML Media ── */}
       <section>
-        <h2>Media Elements — Video, Audio, and YouTube</h2>
+        <h2>Media Elements — Images, Video, Audio, and YouTube</h2>
         <p>
-          The web is not just text! Let's learn how to embed video, audio, and
-          YouTube content. These are the tags that make your pages come alive.
+          The web is not just text! Let's learn how to embed images, video,
+          audio, and YouTube content. These are the tags that make your pages
+          come alive.
         </p>
+
+        <h3>Images and the alt Attribute</h3>
+        <p>
+          <code>&lt;img&gt;</code> is a void element — no closing tag, no
+          content between tags. Everything it needs lives in its attributes.
+        </p>
+
+        <AnnotatedCode
+          title="The image element — and the attribute everyone forgets"
+          segments={[
+            {
+              code: "<img",
+              annotation:
+                "A void element: there is no </img>. Everything is an attribute.",
+              label: "Image Tag",
+            },
+            { code: " " },
+            {
+              code: 'src="images/campus.jpg"',
+              annotation:
+                "Where the file is. A relative path like this one is resolved from the HTML file's own location — images/campus.jpg means 'the images folder next to this page'.",
+              label: "src",
+            },
+            { code: "\n     " },
+            {
+              code: 'alt="Students working on laptops in the BTU library"',
+              annotation:
+                "The single most important attribute on the web. Screen readers read it aloud; it is what shows if the image fails to load; and search engines use it to understand the picture. Describe what the image SHOWS, in a sentence a person would find useful. Do not start with 'Image of' — the screen reader already says that.",
+              label: "alt (required!)",
+            },
+            { code: "\n     " },
+            {
+              code: 'width="800" height="450"',
+              annotation:
+                "Give the real pixel dimensions of the file. The browser uses them to reserve the right amount of space before the image downloads, so the rest of the page does not jump around as images load. CSS can still resize it afterwards.",
+              label: "width/height",
+            },
+            { code: "\n     " },
+            {
+              code: 'loading="lazy"',
+              annotation:
+                "Tells the browser not to download this image until the user scrolls near it. Use it on everything below the first screenful; leave it OFF the main image at the top, which you want loaded immediately.",
+              label: "loading",
+            },
+            { code: " />\n\n" },
+            {
+              code: '<img src="decorative-swirl.svg" alt="" />',
+              annotation:
+                'An EMPTY alt is not a missing alt. alt="" means "this is pure decoration, skip it" and a screen reader stays silent. Leaving the attribute out entirely is different: the screen reader falls back to reading the file name aloud, which is worse than nothing.',
+              label: 'alt="" for decoration',
+            },
+          ]}
+        />
+
+        <InfoBox type="tip">
+          <strong>How to write alt text:</strong> ask what the image is{" "}
+          <em>doing</em> on the page. A photo illustrating an article? Describe
+          the scene. A logo inside a link to the homepage?{" "}
+          <code>alt="BTU homepage"</code> — describe the destination, not the
+          picture. A chart? Give the conclusion it shows, not "chart". Purely
+          decorative? <code>alt=""</code>.
+        </InfoBox>
 
         <h3>The Video Element</h3>
         <p>
@@ -252,6 +318,13 @@ const Lecture02 = () => {
               annotation:
                 "Points to the video file. The type attribute helps the browser know the format. You can add multiple sources for different formats as fallbacks.",
               label: "Source",
+            },
+            { code: "\n  " },
+            {
+              code: '<track kind="captions" src="captions.vtt"\n         srclang="en" label="English" default />',
+              annotation:
+                "Captions. Without them your video is unusable for deaf and hard-of-hearing viewers — and for everyone watching with the sound off, which is most people on a phone. A .vtt file is plain text: timestamps and the words spoken. 'default' turns them on automatically.",
+              label: "Captions",
             },
             { code: "\n  Your browser does not support the video element.\n" },
             { code: "</video>" },
@@ -349,6 +422,13 @@ const Lecture02 = () => {
               annotation:
                 "The embed URL. Note it uses /embed/ — not the regular youtube.com/watch URL. YouTube gives you this when you click Share > Embed.",
               label: "Source URL",
+            },
+            { code: "\n  " },
+            {
+              code: 'title="Introduction to the BTU campus"',
+              annotation:
+                "An iframe's accessible name. Without it a screen reader announces the embed as just 'frame', and the user has no idea whether to enter it. It is a WCAG requirement, it is one attribute, and almost nobody adds it — be the exception.",
+              label: "title (required!)",
             },
             { code: "\n  " },
             {
@@ -488,11 +568,16 @@ const Lecture02 = () => {
         />
 
         <InfoBox type="warning">
-          If the same property is set in multiple places, the priority is:{" "}
-          <strong>inline style</strong> (highest) then{" "}
-          <strong>internal/external</strong> (depends on order) then{" "}
-          <strong>browser default</strong> (lowest). This is the "Cascading" in
-          CSS!
+          When two rules set the same property on the same element, the browser
+          decides in this order: <strong>1. where the rule came from</strong>{" "}
+          (your stylesheet beats the browser's defaults),{" "}
+          <strong>2. specificity</strong> (how precisely the selector targets
+          the element -- see below), and only if those tie,{" "}
+          <strong>3. source order</strong> (the last rule written wins). This is
+          the "Cascading" in CSS. Note that{" "}
+          <em>internal vs external has nothing to do with it</em> -- a{" "}
+          <code>&lt;style&gt;</code> block does not beat a linked stylesheet;
+          whichever comes last in the HTML does.
         </InfoBox>
       </section>
 
@@ -630,6 +715,111 @@ const Lecture02 = () => {
           <strong>IDs</strong> for unique elements you might target with
           JavaScript or anchor links. Over-using IDs is a common beginner
           mistake.
+        </InfoBox>
+
+        <h3>Specificity: Who Wins?</h3>
+        <p>
+          Sooner or later two rules will target the same element and set the
+          same property. Which one applies is not "the last one" and not "the
+          longest one" -- it is decided by <strong>specificity</strong>. Count
+          the selector as three numbers:
+        </p>
+
+        <Diagram title="Specificity: count IDs, then classes, then elements">
+          <div className="space-y-2">
+            {[
+              {
+                sel: "p",
+                score: "0-0-1",
+                note: "one element",
+                color: "bg-gray-100 border-gray-300",
+              },
+              {
+                sel: "nav a",
+                score: "0-0-2",
+                note: "two elements",
+                color: "bg-gray-100 border-gray-300",
+              },
+              {
+                sel: ".highlight",
+                score: "0-1-0",
+                note: "one class -- beats ANY number of elements",
+                color: "bg-blue-50 border-blue-300",
+              },
+              {
+                sel: "nav a.active",
+                score: "0-1-2",
+                note: "one class + two elements",
+                color: "bg-blue-50 border-blue-300",
+              },
+              {
+                sel: "#main-title",
+                score: "1-0-0",
+                note: "one ID -- beats ANY number of classes",
+                color: "bg-purple-50 border-purple-300",
+              },
+            ].map((row) => (
+              <div
+                key={row.sel}
+                className={`${row.color} border-2 rounded-lg px-4 py-2 flex flex-wrap items-center gap-3`}
+              >
+                <code className="bg-gray-800 text-green-400 px-3 py-1 rounded text-sm">
+                  {row.sel}
+                </code>
+                <span className="font-mono font-bold text-gray-800 text-sm">
+                  {row.score}
+                </span>
+                <span className="text-sm text-gray-600">{row.note}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-gray-500 mt-3">
+            Compare left to right. The first column that differs decides it --
+            so <code>0-1-0</code> beats <code>0-0-9</code>, and{" "}
+            <code>1-0-0</code> beats <code>0-9-0</code>. Only when the scores
+            are <em>identical</em> does the later rule win.
+          </p>
+        </Diagram>
+
+        <AnnotatedCode
+          title="Same element, three rules -- which colour is the text?"
+          segments={[
+            {
+              code: '<p id="intro" class="lead">Hello</p>\n\n',
+              annotation:
+                "One paragraph carrying both an id and a class. All three rules below match it.",
+              label: "The element",
+            },
+            {
+              code: "p      { color: black; }   /* 0-0-1 */\n",
+              annotation:
+                "Matches, but it is the weakest of the three. Being written last would not save it.",
+              label: "0-0-1",
+            },
+            {
+              code: ".lead  { color: blue;  }   /* 0-1-0 */\n",
+              annotation:
+                "One class beats any number of element selectors — so this already beats the rule above.",
+              label: "0-1-0",
+            },
+            {
+              code: "#intro { color: red;   }   /* 1-0-0 */\n\n",
+              annotation:
+                "One ID beats any number of classes. The text is RED, even though the blue rule appears later in the file.",
+              label: "1-0-0 wins",
+            },
+            {
+              code: "/* Result: red */",
+            },
+          ]}
+        />
+
+        <InfoBox type="warning">
+          This is exactly why over-using IDs hurts: an ID rule is so strong that
+          the only ways to override it later are another ID, an inline{" "}
+          <code>style</code> attribute, or <code>!important</code> -- and
+          reaching for <code>!important</code> is how stylesheets become
+          unmaintainable. Style with classes and you can always adjust later.
         </InfoBox>
       </section>
 

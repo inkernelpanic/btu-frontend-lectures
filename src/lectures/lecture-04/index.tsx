@@ -286,18 +286,24 @@ const Lecture04 = () => {
           <div className="space-y-4">
             <div>
               <div className="text-xs font-mono text-gray-500 mb-1">
-                nowrap (default) — items overflow!
+                nowrap (default) — items shrink to squeeze onto one line
               </div>
               <div className="bg-red-50 rounded-lg p-2 flex gap-2 overflow-hidden border border-red-200">
                 {["Card 1", "Card 2", "Card 3", "Card 4", "Card 5"].map((c) => (
                   <div
                     key={c}
-                    className="bg-red-400 text-white rounded px-4 py-2 text-xs shrink-0"
+                    className="bg-red-400 text-white rounded px-4 py-2 text-xs overflow-hidden text-ellipsis whitespace-nowrap"
                   >
                     {c}
                   </div>
                 ))}
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Squeeze the window and watch them get narrower. Flex items have{" "}
+                <code>flex-shrink: 1</code> by default, so they shrink first --
+                they only spill out of the container once they cannot shrink any
+                further.
+              </p>
             </div>
             <div>
               <div className="text-xs font-mono text-gray-500 mb-1">
@@ -393,9 +399,27 @@ const Lecture04 = () => {
                 "Step 3: Center vertically (along the cross axis). Combined with justify-content: center, the child is now perfectly centered in both directions!",
               label: "Step 3",
             },
-            { code: "\n  height: 100vh;\n}" },
+            { code: "\n  " },
+            {
+              code: "min-height: 100svh;\n}",
+              annotation:
+                "On a phone, 100vh is the height of the viewport with the URL bar HIDDEN -- so with the bar visible your section is taller than the screen and the bottom is cut off. 100svh ('small viewport height') uses the size WITH the browser UI showing, so nothing is ever hidden. Use min-height rather than height so the box can still grow if the content needs more room.",
+              label: "svh, not vh",
+            },
           ]}
         />
+
+        <InfoBox type="tip">
+          Three viewport-height units, and the difference only shows up on
+          mobile: <code>svh</code> is the <strong>small</strong> viewport
+          (browser UI visible -- the safe choice), <code>lvh</code> is the{" "}
+          <strong>large</strong> one (UI hidden), and <code>dvh</code> is{" "}
+          <strong>dynamic</strong> -- it changes as the bar slides away, which
+          looks smooth but can make the layout shift while scrolling. Reach for{" "}
+          <code>min-height: 100svh</code> by default; plain <code>100vh</code>{" "}
+          behaves like <code>lvh</code> and is what cuts off students' hero
+          buttons.
+        </InfoBox>
 
         <h3>Pattern 2: Navigation Bar</h3>
         <AnnotatedCode
@@ -494,6 +518,55 @@ const Lecture04 = () => {
             ))}
           </div>
         </Diagram>
+
+        <h3>Stop Repeating Your Brand Colour</h3>
+        <p>
+          By the end of a page you will have typed the same blue into a navbar,
+          a hero gradient, a button, and three hover states. Then the client
+          asks for a different blue. <strong>CSS custom properties</strong>{" "}
+          (also called CSS variables) mean you change it in one place.
+        </p>
+
+        <AnnotatedCode
+          title="Define once at the top, use everywhere below"
+          segments={[
+            {
+              code: ":root {\n",
+              annotation:
+                ":root is the <html> element. Anything defined here is available to every rule in your stylesheet, so this is where your design tokens live. Put it at the very top of the file.",
+              label: ":root",
+            },
+            {
+              code: "  --brand: #3498db;\n  --brand-dark: #2980b9;\n  --text: #2d3748;\n  --radius: 8px;\n}\n\n",
+              annotation:
+                "Custom properties must start with two dashes. They can hold anything a CSS value can be -- a colour, a length, a whole shadow, even a font stack. Naming them by ROLE (--brand) rather than by appearance (--blue) is what lets you change the colour later without the name becoming a lie.",
+              label: "Define",
+            },
+            {
+              code: ".navbar { background: var(--brand); }\n.btn    { background: var(--brand); border-radius: var(--radius); }\n",
+              annotation:
+                "var() reads the value back. Change --brand once at the top and the navbar, the button, and everything else follow instantly.",
+              label: "var()",
+            },
+            {
+              code: ".btn:hover { background: var(--brand-dark); }\n\n",
+            },
+            {
+              code: ".alert { color: var(--danger, #e53e3e); }",
+              annotation:
+                "var() takes an optional fallback as its second argument, used if the property was never defined. Useful when you are not sure a token exists yet.",
+              label: "Fallbacks",
+            },
+          ]}
+        />
+
+        <InfoBox type="tip">
+          Unlike a Sass variable, a CSS custom property is live in the browser:
+          it inherits, it can be redefined inside a single component, and
+          JavaScript can change it at runtime with{" "}
+          <code>element.style.setProperty("--brand", "#e91e63")</code>. That is
+          the foundation every theme switcher is built on.
+        </InfoBox>
 
         <h3>Gradients — No Image Needed!</h3>
         <p>
@@ -603,7 +676,7 @@ const Lecture04 = () => {
               label: "Overlay Trick",
             },
             {
-              code: "\n  color: white;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n}",
+              code: "\n  color: white;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100svh;\n}",
             },
           ]}
         />

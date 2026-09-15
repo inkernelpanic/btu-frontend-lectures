@@ -9,14 +9,16 @@ interface GitWrapperProps {
 }
 
 const GitWrapper = ({ id, title, children }: GitWrapperProps) => {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
-
   const currentIndex = gitTopics.findIndex((t) => t.id === id);
+  const current = currentIndex >= 0 ? gitTopics[currentIndex] : null;
   const prev = currentIndex > 0 ? gitTopics[currentIndex - 1] : null;
   const next =
     currentIndex < gitTopics.length - 1 ? gitTopics[currentIndex + 1] : null;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = `${title} — BTU Frontend`;
+  }, [id, title]);
 
   return (
     <article className="max-w-4xl mx-auto px-6 py-8">
@@ -25,6 +27,11 @@ const GitWrapper = ({ id, title, children }: GitWrapperProps) => {
           Git Basics
         </span>
         <h1 className="text-3xl font-bold text-gray-900 mt-1">{title}</h1>
+        {current && (
+          <p className="text-gray-600 mt-2 leading-relaxed">
+            {current.description}
+          </p>
+        )}
       </div>
 
       <div className="lecture-content">{children}</div>
