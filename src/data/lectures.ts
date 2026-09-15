@@ -50,9 +50,9 @@ export const lectures: LectureInfo[] = [
   },
   {
     id: "07",
-    title: "Generative AI & Web Development",
+    title: "Generative AI & Prompt Engineering",
     description:
-      "What is Generative AI, prompts, AI code generation tools, ethical aspects",
+      "Prompt engineering fundamentals, using ChatGPT/Claude/Gemini for code generation, debugging and refactoring, evaluating and validating AI-generated code, ethical use",
     section: "Tools",
   },
   {

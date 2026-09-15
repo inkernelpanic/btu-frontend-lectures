@@ -56,7 +56,11 @@ const Lecture08 = () => {
                 topic: "Responsive & Positioning",
                 color: "bg-purple-500",
               },
-              { week: "W7", topic: "AI & Web Dev", color: "bg-gray-700" },
+              {
+                week: "W7",
+                topic: "AI & Prompt Engineering",
+                color: "bg-gray-700",
+              },
             ].map((w) => (
               <div
                 key={w.week}

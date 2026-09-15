@@ -1,5 +1,6 @@
 import LectureWrapper from "../../components/LectureWrapper";
 import AnnotatedCode from "../../components/AnnotatedCode";
+import CodeBlock from "../../components/CodeBlock";
 import Diagram from "../../components/Diagram";
 import InfoBox from "../../components/InfoBox";
 import ExerciseBlock from "../../components/ExerciseBlock";
@@ -7,16 +8,16 @@ import HomeworkBlock from "../../components/HomeworkBlock";
 
 const Lecture07 = () => {
   return (
-    <LectureWrapper id="07" title="Generative AI & Web Development">
+    <LectureWrapper id="07" title="Generative AI & Prompt Engineering">
       {/* ── Intro ── */}
       <section>
         <h2>The AI Revolution in Your Code Editor</h2>
         <p>
           Welcome to the wildest shift in software development since the
           invention of the internet itself. <strong>Generative AI</strong> --
-          tools like ChatGPT, Claude, and GitHub Copilot -- can now write code,
-          explain concepts, debug errors, and generate entire web pages from a
-          text description.
+          tools like ChatGPT, Claude, Gemini, and GitHub Copilot -- can now
+          write code, explain concepts, debug errors, refactor messy CSS, and
+          generate entire web pages from a text description.
         </p>
         <p>
           But here is the thing:{" "}
@@ -97,7 +98,7 @@ const Lecture07 = () => {
 
         <h3>The Players</h3>
         <Diagram title="Popular AI tools for web development">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
               {
                 name: "ChatGPT",
@@ -110,6 +111,12 @@ const Lecture07 = () => {
                 by: "Anthropic",
                 tag: "Chat + Code",
                 color: "bg-orange-50 border-orange-200",
+              },
+              {
+                name: "Gemini",
+                by: "Google",
+                tag: "Chat + Code",
+                color: "bg-sky-50 border-sky-200",
               },
               {
                 name: "GitHub Copilot",
@@ -147,7 +154,7 @@ const Lecture07 = () => {
 
       {/* ── Prompting ── */}
       <section>
-        <h2>The Art of Prompting</h2>
+        <h2>Prompt Engineering</h2>
         <p>
           A <strong>prompt</strong> is what you type into an AI tool. The
           quality of your prompt <em>directly</em> determines the quality of the
@@ -296,10 +303,13 @@ const Lecture07 = () => {
           ]}
         />
 
-        <h3>Example 2: Before/After -- Your Code vs AI-Improved</h3>
+        <h3>Example 2: Refactoring -- Your Code vs AI-Improved</h3>
         <p>
-          One of the best uses of AI: paste your existing code and ask "Review
-          this and suggest improvements."
+          <strong>Refactoring</strong> means rewriting code so it is cleaner,
+          safer, or more modern <em>without changing what it does</em>. The page
+          looks the same to the visitor; the code underneath gets better. This
+          is one of the best uses of AI: paste your existing code and ask
+          "Refactor this and explain each change."
         </p>
 
         <Diagram title="AI code review: spot the improvements!">
@@ -349,6 +359,78 @@ const Lecture07 = () => {
             images.
           </div>
         </Diagram>
+
+        <h3>Example 3: Debugging with AI</h3>
+        <p>
+          Debugging is where AI saves the most time -- but only if you ask
+          properly. "My CSS is broken, fix it" gets you nowhere. A good debug
+          prompt has <strong>three parts</strong>: the smallest snippet that
+          reproduces the problem, the <em>exact</em> symptom you see, and the
+          behaviour you expected instead.
+        </p>
+
+        <CodeBlock
+          language="css"
+          title="The broken snippet -- why is the text not vertically centered?"
+          code={`.card {
+  display: flex;
+  height: 200px;
+}
+
+.card__title {
+  align-items: center;
+}`}
+        />
+
+        <p>
+          <em>
+            Prompt: "This CSS should vertically center .card__title inside
+            .card, but the title sits at the top of the 200px box. Expected: the
+            title centered vertically. Here is the CSS: [snippet]. What is
+            wrong, and why?"
+          </em>
+        </p>
+
+        <p>
+          The answer: <code>align-items</code> is a{" "}
+          <strong>flex container</strong> property, so it belongs on{" "}
+          <code>.card</code>, not on the child. Move it up one level and the
+          title centers. Notice that you now know a <em>rule</em>, not just a
+          fix -- that is the whole point.
+        </p>
+
+        <Diagram title="The AI debugging loop">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {[
+              { step: "Reproduce", color: "bg-red-500" },
+              {
+                step: "Describe symptom + expectation",
+                color: "bg-orange-500",
+              },
+              { step: "Paste minimal snippet", color: "bg-yellow-500" },
+              { step: "Test the fix yourself", color: "bg-blue-500" },
+              { step: "Understand why it worked", color: "bg-green-600" },
+            ].map((s, i, arr) => (
+              <div key={s.step} className="flex items-center gap-2">
+                <span
+                  className={`${s.color} text-white px-3 py-2 rounded-lg text-sm font-semibold`}
+                >
+                  {s.step}
+                </span>
+                {i < arr.length - 1 && (
+                  <span className="text-gray-400 font-bold">→</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </Diagram>
+
+        <InfoBox type="warning">
+          A fix you cannot explain is not a fix -- it is a bug waiting to come
+          back. If the AI hands you a working answer and you do not know why the
+          original failed, you have not debugged anything; you have only moved
+          the problem out of sight.
+        </InfoBox>
       </section>
 
       {/* ── Ethics ── */}
@@ -397,21 +479,37 @@ const Lecture07 = () => {
           accelerate your learning, not replace it.
         </InfoBox>
 
-        <h3>Academic Integrity</h3>
-        <p>This is serious. In this course (and most courses):</p>
+        <h3>Academic Integrity: the course policy</h3>
+        <p>
+          These are not suggestions -- they are written into the course
+          syllabus:
+        </p>
         <ul>
           <li>
-            <strong>Always follow your instructor's policy</strong> on AI usage
-            for assignments and exams.
+            <strong>AI is allowed only to support your learning.</strong> Using
+            ChatGPT, Claude, Gemini or similar tools while you work is
+            permitted; outsourcing the learning to them is not.
           </li>
           <li>
-            <strong>Be transparent</strong> -- if you used AI to help, say so.
-            Many instructors appreciate honesty.
+            <strong>
+              Presenting AI-generated code entirely as your own work is an
+              academic-integrity violation
+            </strong>{" "}
+            and carries a disciplinary sanction.
           </li>
           <li>
-            <strong>The goal is learning</strong> -- AI that helps you
-            understand faster is great. AI that lets you skip understanding is
-            harmful to your career.
+            <strong>
+              At the project defense you must declare your AI usage
+            </strong>{" "}
+            -- which tools you used, which parts they produced, what your own
+            contribution was -- and justify the technical decisions in your
+            code.
+          </li>
+          <li>
+            <strong>You are graded on you, not on the AI.</strong> The score
+            comes from your knowledge, your analysis, and your ability to make
+            independent decisions -- not from the quality of the generated
+            output.
           </li>
         </ul>
       </section>
@@ -655,6 +753,26 @@ const Lecture07 = () => {
             </li>
           </ul>
         </ExerciseBlock>
+
+        <ExerciseBlock number={4}>
+          <p>
+            <strong>Debug It, Then Explain It.</strong> Build a three-card row
+            with Flexbox, then deliberately break it: put{" "}
+            <code>justify-content</code> on a card instead of on the container.
+            Now:
+          </p>
+          <ul>
+            <li>
+              Write a debug prompt with all three parts: the minimal snippet,
+              the exact symptom, and the expected behaviour.
+            </li>
+            <li>Apply the AI's fix and confirm it in the browser.</li>
+            <li>
+              Write <strong>one sentence</strong> explaining why the original
+              failed. If you cannot write that sentence, you are not done.
+            </li>
+          </ul>
+        </ExerciseBlock>
       </section>
 
       {/* ── Homework ── */}
@@ -683,6 +801,13 @@ const Lecture07 = () => {
           <li>
             <strong>Add comments</strong> to every CSS section proving you
             understand the code.
+          </li>
+          <li>
+            <strong>Write an AI usage statement</strong> at the bottom of your
+            HTML, in a comment: which tools you used, which parts of the page
+            they generated, and what you changed yourself and why. This is the
+            same declaration the syllabus requires at your project defense --
+            treat this homework as the rehearsal.
           </li>
         </ol>
         <p>
